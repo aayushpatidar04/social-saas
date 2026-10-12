@@ -132,19 +132,6 @@ class ProcessMetaWebhook implements ShouldQueue
     {
         $value = $change['value'] ?? [];
 
-        $verb = $value['verb'] ?? null;
-
-        if ($verb === 'add') {
-            $this->handleInstagramCommentAdd($entry, $change);
-        } elseif ($verb === 'remove') {
-            $this->handleInstagramCommentRemove($entry, $change);
-        }
-    }
-
-    private function handleInstagramCommentAdd(array $entry, array $change): void
-    {
-        $value = $change['value'] ?? [];
-
         $commentId = $value['id'] ?? null;
 
         if (!$commentId) {
@@ -186,19 +173,7 @@ class ProcessMetaWebhook implements ShouldQueue
         ];
 
         app(InstagramService::class)->syncSingleCommentFromWebhook($account, $instagramValue);
-    }
-
-    private function handleInstagramCommentRemove(array $entry, array $change): void
-    {
-        $value = $change['value'] ?? [];
-
-        $commentId = $value['id'] ?? null;
-
-        if (!$commentId) {
-            return;
-        }
-
-        $this->cascadeDeleteComment('instagram', $commentId);
+        
     }
 
     /**
