@@ -492,11 +492,6 @@ class InstagramService
          * Webhook comments should also respect
          * auto_reply_started_at.
          */
-        \Log::info($storedComment->wasRecentlyCreated ? 'New comment received' : 'Existing comment updated');
-        \Log::info($this->shouldAnalyzeComment(
-                $account,
-                $storedComment
-            ));
         if (
             $storedComment->wasRecentlyCreated &&
             $this->shouldAnalyzeComment(

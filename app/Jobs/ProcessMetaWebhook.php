@@ -31,7 +31,7 @@ class ProcessMetaWebhook implements ShouldQueue
         foreach ($this->payload['entry'] ?? [] as $entry) {
             foreach ($entry['changes'] ?? [] as $change) {
                 $field = $change['field'] ?? null;
-                \Log::info('Field: '.$field);
+
                 if ($field === 'feed') {
                     $this->handleFacebookFeed($entry, $change);
                 }
@@ -133,7 +133,7 @@ class ProcessMetaWebhook implements ShouldQueue
         $value = $change['value'] ?? [];
 
         $verb = $value['verb'] ?? null;
-        \Log::info('Instagram comment verb: '.$verb);
+
         if ($verb === 'add') {
             $this->handleInstagramCommentAdd($entry, $change);
         } elseif ($verb === 'remove') {
@@ -154,6 +154,7 @@ class ProcessMetaWebhook implements ShouldQueue
         $instagramAccountId = $entry['id'] ?? null;
 
         $account = $this->findInstagramAccount($instagramAccountId);
+
         if (!$account) {
             Log::warning('Instagram webhook account not found', [
                 'instagram_account_id' => $instagramAccountId,
@@ -183,8 +184,6 @@ class ProcessMetaWebhook implements ShouldQueue
             'timestamp' => $fullCommentData['timestamp'] ?? null,
             'media' => $fullCommentData['media'] ?? [],
         ];
-
-        \Log::info($instagramValue);
 
         app(InstagramService::class)->syncSingleCommentFromWebhook($account, $instagramValue);
     }
