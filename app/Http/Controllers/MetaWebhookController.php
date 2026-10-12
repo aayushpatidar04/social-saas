@@ -35,7 +35,7 @@ class MetaWebhookController extends Controller
         }
 
         $credential->forceFill(['last_webhook_at' => now()])->saveQuietly();
-
+        \Log::info('Meta webhook received', ['key' => $key ? substr($key, 0, 6).'…' : null]);
         ProcessMetaWebhook::dispatch($request->json()->all() ?: $request->all());
 
         return response()->json(['success' => true]);
