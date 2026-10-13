@@ -519,7 +519,9 @@ class InstagramService
         string $commentId
     ): ?array {
 
-        $response = Http::get(
+        $response = Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
             MetaApi::base($account) . '/'
             . $commentId,
             [
@@ -572,7 +574,9 @@ class InstagramService
         ) {
 
             $mediaResponse =
-                Http::get(
+                Http::connectTimeout(30) // Seconds to wait while trying to connect
+                ->timeout(60)   
+                ->get(
                     MetaApi::base($account) . "/{$mediaId}",
                     [
                         'fields' =>
@@ -605,7 +609,9 @@ class InstagramService
     ): array {
 
         $response =
-            Http::get(
+            Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
                 MetaApi::base($account) . '/'
                 . $account->platform_account_id
                 . '/media',
@@ -647,7 +653,9 @@ class InstagramService
     ): array {
 
         $response =
-            Http::get(
+            Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
                 MetaApi::base($account) . '/'
                 . $mediaId
                 . '/comments',
@@ -715,7 +723,9 @@ class InstagramService
     ): array {
 
         $response =
-            Http::get(
+            Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
                 MetaApi::base($account) . '/'
                 . $commentId
                 . '/replies',
@@ -767,7 +777,9 @@ class InstagramService
         try {
 
             $response =
-                Http::post(
+                Http::connectTimeout(30) // Seconds to wait while trying to connect
+                ->timeout(60)   
+                ->post(
                     MetaApi::base($account) . "/{$comment->platform_comment_id}/replies",
                     [
                         'message' =>

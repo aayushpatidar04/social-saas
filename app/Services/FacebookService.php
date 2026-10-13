@@ -278,7 +278,9 @@ class FacebookService
         SocialAccount $account
     ): ?string {
 
-        $response = Http::get(
+        $response = Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
             MetaApi::base($account) . '/'
             . $account->platform_account_id,
             [
@@ -324,7 +326,9 @@ class FacebookService
         SocialAccount $account
     ): array {
 
-        $response = Http::get(
+        $response = Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
             MetaApi::base($account) . '/'
             . $account->platform_account_id
             . '/posts',
@@ -364,7 +368,9 @@ class FacebookService
         string $postId
     ): array {
 
-        $response = Http::get(
+        $response = Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
             MetaApi::base($account) . '/'
             . $postId
             . '/comments',
@@ -427,7 +433,9 @@ class FacebookService
         string $commentId
     ): array {
 
-        $response = Http::get(
+        $response = Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->get(
             MetaApi::base($account) . '/'
             . $commentId
             . '/comments',
@@ -473,7 +481,9 @@ class FacebookService
     ) {
         try {
 
-            $response = Http::post(
+            $response = Http::connectTimeout(30) // Seconds to wait while trying to connect
+            ->timeout(60)   
+            ->post(
                 MetaApi::base($account) . '/'
                 . $comment->platform_comment_id
                 . '/comments',
