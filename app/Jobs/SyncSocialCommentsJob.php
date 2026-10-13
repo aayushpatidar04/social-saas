@@ -52,11 +52,11 @@ class SyncSocialCommentsJob implements ShouldQueue
             $postDays = config('sync.post_window_days', 30);
             $commentDays = config('sync.comment_window_days', 7);
 
-            $options = array_merge($this->options, [
+            $options = $this->options ?? [
                 'post_window_days' => $postDays,
                 'comment_window_days' => $commentDays,
                 'full_sync' => false,
-            ]);
+            ];
         }
 
         try {

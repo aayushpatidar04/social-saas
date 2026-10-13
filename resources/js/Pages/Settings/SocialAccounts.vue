@@ -120,11 +120,11 @@
                                     :loading="loading.sync[account.id]"
                                     :loading-text="'Syncing...'"
                                     base-classes="bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
-                                    @click="syncYoutube(account.id)"
+                                    @click="sync(account.id, false)"
                                 >
                                     Sync Now
                                 </LoadingButton>
-                                <LoadingButton
+                                <!-- <LoadingButton
                                     :loading="loading.webhook[account.id]"
                                     :loading-text="'Toggling...'"
                                     :class="[
@@ -140,7 +140,7 @@
                                             ? "Webhook Active"
                                             : "Subscribe Webhook"
                                     }}
-                                </LoadingButton>
+                                </LoadingButton> -->
                             </template>
 
                             <LoadingButton

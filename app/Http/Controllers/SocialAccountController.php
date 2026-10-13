@@ -98,11 +98,11 @@ class SocialAccountController extends Controller
             }
 
             match ($account->platform) {
-                'facebook' => SyncFacebookComments::dispatch($account, $options, $fullSync),
-                'instagram' => SyncInstagramComments::dispatch($account, $options, $fullSync),
-                'youtube' => SyncYoutubeComments::dispatch($account, $options, $fullSync),
-                'twitter' => SyncTwitterComments::dispatch($account, $options, $fullSync),
-                'linkedin' => SyncLinkedInComments::dispatch($account, $options, $fullSync),
+                'facebook' => SyncFacebookComments::dispatch($account, $options, $fullSync)->onConnection('sync'),
+                'instagram' => SyncInstagramComments::dispatch($account, $options, $fullSync)->onConnection('sync'),
+                'youtube' => SyncYoutubeComments::dispatch($account, $options, $fullSync)->onConnection('sync'),
+                'twitter' => SyncTwitterComments::dispatch($account, $options, $fullSync)->onConnection('sync'),
+                'linkedin' => SyncLinkedInComments::dispatch($account, $options, $fullSync)->onConnection('sync'),
                 default => Log::warning('No sync job for platform: ' . $account->platform),
             };
 
