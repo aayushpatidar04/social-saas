@@ -5,6 +5,7 @@
 namespace App\Services;
 
 use App\Models\SocialComment;
+use App\Models\Organization;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
@@ -27,10 +28,10 @@ class OllamaService
      * Analyze a social media comment
      * Returns sentiment, intent, and lead score
      */
-    public function analyzeComment(SocialComment $comment): array
+    public function analyzeComment(int $organizationId, SocialComment $comment): array
     {
         try {
-            $prompt = $this->buildAnalysisPrompt($comment->content);
+            $prompt = $this->buildAnalysisPrompt($organizationId, $comment->content);
 
             $response = $this->callOllama($prompt);
 
@@ -48,11 +49,12 @@ class OllamaService
     /**
      * Generate AI response to a comment
      */
-    public function generateResponse(SocialComment $comment, array $context = []): string
+    public function generateResponse(int $organizationId, SocialComment $comment, array $context = []): string
     {
         try {
 
             $prompt = $this->buildResponsePrompt(
+                organizationId: $organizationId,
                 commentContent: $comment->content,
                 authorName: $comment->author_name,
                 context: $context
@@ -71,22 +73,10 @@ class OllamaService
     /**
      * Classify comment intent (sales, support, complaint, question, etc)
      */
-    public function classifyIntent(string $content): array
+    public function classifyIntent(int $organizationId, string $content): array
     {
         try {
-            $prompt = <<<PROMPT
-                Classify the intent of this social media comment. Response MUST be ONLY one word from this list:
-                - sales (asking about products/pricing)
-                - support (needs help/has issue)
-                - complaint (unhappy/negative)
-                - question (asking for information)
-                - lead (potential customer interest)
-                - general (other)
-
-                Comment: "$content"
-
-                Response (single word only):
-                PROMPT;
+            $prompt = $this->renderOrganizationPrompt($organizationId, 'intent', ['comment' => $content]);
 
             $intent = trim($this->callOllama($prompt));
 
@@ -110,19 +100,10 @@ class OllamaService
     /**
      * Analyze sentiment (positive, negative, neutral)
      */
-    public function analyzeSentiment(string $content): array
+    public function analyzeSentiment(int $organizationId, string $content): array
     {
         try {
-            $prompt = <<<PROMPT
-                Analyze the sentiment of this comment. Response MUST be ONLY one word:
-                - positive
-                - negative
-                - neutral
-
-                Comment: "$content"
-
-                Response (single word only):
-                PROMPT;
+            $prompt = $this->renderOrganizationPrompt($organizationId, 'sentiment', ['comment' => $content]);
 
             $sentiment = trim(strtolower($this->callOllama($prompt)));
 
@@ -147,16 +128,10 @@ class OllamaService
     /**
      * Detect if comment is from a potential lead
      */
-    public function detectLead(string $content): array
+    public function detectLead(int $organizationId, string $content): array
     {
         try {
-            $prompt = <<<PROMPT
-                Is this a comment from a potential customer lead? Response MUST be YES or NO only.
-
-                Comment: "$content"
-
-                Response (YES or NO only):
-                PROMPT;
+            $prompt = $this->renderOrganizationPrompt($organizationId, 'lead_detection', ['comment' => $content]);
 
             $response = trim(strtoupper($this->callOllama($prompt)));
             $isLead = strpos($response, 'YES') !== false;
@@ -175,27 +150,16 @@ class OllamaService
     /**
      * Build analysis prompt
      */
-    private function buildAnalysisPrompt(string $content): string
+    private function buildAnalysisPrompt(int $organizationId, string $content): string
     {
-        return <<<PROMPT
-            Analyze this social media comment and provide a brief analysis.
-
-            Comment: "$content"
-
-            Provide analysis in this EXACT format:
-            Sentiment: [positive/negative/neutral]
-            Intent: [sales/support/complaint/question/lead/general]
-            IsLead: [YES/NO]
-            Score: [0-100]
-
-            Analysis:
-            PROMPT;
+        return $this->renderOrganizationPrompt($organizationId, 'analysis', ['comment' => $content]);
     }
 
     /**
      * Build response prompt
      */
     private function buildResponsePrompt(
+        int $organizationId,
         string $commentContent,
         string $authorName,
         array $context = []
@@ -208,37 +172,36 @@ class OllamaService
             ? $context['conversation_history']
             : 'No previous conversation history.';
 
-        return <<<PROMPT
-You are a customer service representative for a financial services company.
+        return $this->renderOrganizationPrompt($organizationId, 'response', [
+            'knowledge' => $knowledge,
+            'conversation_history' => $conversationHistory,
+            'author_name' => $authorName,
+            'comment' => $commentContent,
+        ]);
+    }
 
-Your job:
-- Understand the full conversation history before replying.
-- Reply only to the latest customer message.
-- Do not repeat information already given by the assistant.
-- Keep the reply brief, professional, and helpful.
-- Use 1-2 sentences only.
-- Do not mention that you are an AI.
-- Do not promise guaranteed returns or financial outcomes.
-- If the user asks for investment advice, suggest speaking with an advisor or sharing details for guidance.
-- If he asks for contact then give website link as arihantplus.com contact page.
-- Never keep any placeholders in the reply, if you dont have idea what to reply then search over the web regarding the services and anything that is relevant to ArihantPlus.
-Relevant Knowledge Base:
-{$knowledge}
+    public static function defaultPrompts(): array
+    {
+        return config('ai_prompts');
+    }
 
-Conversation History:
-{$conversationHistory}
+    private function renderOrganizationPrompt(int $organizationId, string $key, array $variables): string
+    {
+        $organization = Organization::query()->findOrFail($organizationId);
+        $prompts = array_replace(self::defaultPrompts(), $organization->ai_prompts ?? []);
+        $replacements = [];
 
-Latest Customer Message from {$authorName}:
-"{$commentContent}"
+        foreach ($variables as $name => $value) {
+            $replacements['{'.$name.'}'] = (string) $value;
+        }
 
-Write the best reply:
-PROMPT;
+        return strtr($prompts[$key], $replacements);
     }
 
     /**
      * Call Ollama API
      */
-    private function callOllama(string $prompt): string
+    protected function callOllama(string $prompt): string
     {
         try {
 

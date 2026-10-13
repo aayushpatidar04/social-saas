@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Services\OllamaService;
 
 class OrganizationSettingsController extends Controller
 {
@@ -15,6 +16,7 @@ class OrganizationSettingsController extends Controller
 
         return Inertia::render('Settings/Organization', [
             'organization' => $organization->only(['id', 'name', 'description', 'website', 'logo_url', 'plan', 'plan_expires_at']),
+            'aiPrompts' => array_replace(OllamaService::defaultPrompts(), $organization->ai_prompts ?? []),
             'usage' => [
                 'users' => ['used' => $organization->users()->count(), 'max' => $organization->limit('users')],
                 'social_accounts' => [
@@ -35,6 +37,12 @@ class OrganizationSettingsController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'website' => ['nullable', 'url', 'max:255'],
+            'ai_prompts' => ['sometimes', 'array:analysis,response,intent,sentiment,lead_detection'],
+            'ai_prompts.analysis' => ['required_with:ai_prompts', 'string', 'max:10000'],
+            'ai_prompts.response' => ['required_with:ai_prompts', 'string', 'max:10000'],
+            'ai_prompts.intent' => ['required_with:ai_prompts', 'string', 'max:10000'],
+            'ai_prompts.sentiment' => ['required_with:ai_prompts', 'string', 'max:10000'],
+            'ai_prompts.lead_detection' => ['required_with:ai_prompts', 'string', 'max:10000'],
         ]);
 
         Auth::user()->organization->update($data);

@@ -36,9 +36,10 @@ class AnalyzeWithOllama implements ShouldQueue
             }
 
             // Run analysis calls
-            $sentimentAnalysis = $service->analyzeSentiment($analysisText);
-            $intentAnalysis = $service->classifyIntent($analysisText);
-            $leadAnalysis = $service->detectLead($analysisText);
+            $organizationId = $this->comment->organization_id;
+            $sentimentAnalysis = $service->analyzeSentiment($organizationId, $analysisText);
+            $intentAnalysis = $service->classifyIntent($organizationId, $analysisText);
+            $leadAnalysis = $service->detectLead($organizationId, $analysisText);
 
             $analysis = [
                 'sentiment' => $sentimentAnalysis['sentiment'],

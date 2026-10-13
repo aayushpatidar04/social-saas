@@ -28,7 +28,7 @@ class AnalyzeCommentWithAI implements ShouldQueue
         try {
             $service = new OpenAIService($this->comment->organization_id);
 
-            $analysis = $service->analyzeComment($this->comment);
+            $analysis = $service->analyzeComment($this->comment->organization_id, $this->comment);
 
             // Update comment with analysis results
             $this->comment->update([

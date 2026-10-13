@@ -11,6 +11,15 @@ class Organization extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::creating(function (Organization $organization) {
+            if ($organization->ai_prompts === null) {
+                $organization->ai_prompts = config('ai_prompts');
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'slug',
@@ -26,12 +35,14 @@ class Organization extends Model
         'suspended_reason',
         'created_by',
         'settings',
+        'ai_prompts',
         'is_active'
     ];
 
     protected $casts = [
         'plan_expires_at' => 'datetime',
         'settings' => 'array',
+        'ai_prompts' => 'array',
         'is_active' => 'boolean',
         'allow_custom_apps' => 'boolean',
         'suspended_at' => 'datetime',

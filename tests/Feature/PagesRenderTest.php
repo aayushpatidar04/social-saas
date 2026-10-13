@@ -67,7 +67,7 @@ class PagesRenderTest extends TestCase
         $this->get('/settings/team')->assertOk()->assertInertia(fn ($p) => $p->component('Settings/Team')
             ->has('teamMembers', 1)->has('invitations', 1)->where('canManage', true));
         $this->get('/settings/organization')->assertOk()->assertInertia(fn ($p) => $p->component('Settings/Organization')
-            ->where('usage.social_accounts.used', 3)->where('canEdit', true));
+            ->where('usage.social_accounts.used', 3)->where('canEdit', true)->has('aiPrompts.analysis'));
         $this->get('/settings/integrations')->assertOk()->assertInertia(fn ($p) => $p->component('Settings/Integrations')
             ->where('enabled', true)->has('providers', 5));                  // ollama is infrastructure: not offered
     }

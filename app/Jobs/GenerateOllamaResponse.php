@@ -60,6 +60,7 @@ class GenerateOllamaResponse implements ShouldQueue
             ];
 
             $response = $service->generateResponse(
+                $this->comment->organization_id,
                 $this->comment,
                 $context
             );
