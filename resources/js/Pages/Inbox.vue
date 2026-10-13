@@ -153,9 +153,7 @@
                                     · {{ formatDate(thread.commented_at) }}
                                     <span v-if="thread.thread_replies?.length">
                                         · 💬
-                                        {{
-                                            thread.thread_replies.length
-                                        }}
+                                        {{ thread.thread_replies.length }}
                                         replies
                                     </span>
                                 </p>
@@ -299,62 +297,71 @@
             <!-- Thread Detail Modal -->
             <div
                 v-if="selectedThread"
-                class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+                class="fixed inset-0 bg-black bg-opacity-70 z-50 overflow-y-auto thin-scroll"
+                @click.self="selectedThread = null"
             >
-                <div
-                    class="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
-                >
+                <!-- centers the modal, and lets the overlay scroll if the screen is very short -->
+                <div class="min-h-full flex items-center justify-center p-4">
                     <div
-                        class="p-6 border-b border-slate-700 flex justify-between items-start"
+                        class="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-700"
                     >
-                        <div>
-                            <h2 class="text-2xl font-bold text-white">
-                                Conversation
-                            </h2>
-                            <p class="text-slate-400 text-sm">
-                                {{ platformLabel(selectedThread.platform) }}
-                                · {{ selectedThread.author_name }}
-                            </p>
+                        <!-- Header (fixed) -->
+                        <div
+                            class="p-6 border-b border-slate-700 flex justify-between items-start shrink-0"
+                        >
+                            <div>
+                                <h2 class="text-2xl font-bold text-white">
+                                    Conversation
+                                </h2>
+                                <p class="text-slate-400 text-sm">
+                                    {{ platformLabel(selectedThread.platform) }}
+                                    · {{ selectedThread.author_name }}
+                                </p>
+                            </div>
+
+                            <button
+                                @click="selectedThread = null"
+                                class="text-slate-400 hover:text-white text-2xl"
+                            >
+                                ×
+                            </button>
                         </div>
 
-                        <button
-                            @click="selectedThread = null"
-                            class="text-slate-400 hover:text-white text-2xl"
+                        <!-- Thread bubbles (scrollable) -->
+                        <div
+                            class="flex-1 min-h-0 overflow-y-auto overscroll-contain thin-scroll p-6 space-y-4"
                         >
-                            ×
-                        </button>
-                    </div>
+                            <!-- Root -->
+                            <MessageBubble :message="selectedThread" />
 
-                    <div class="p-6 overflow-y-auto max-h-[65vh] space-y-4">
-                        <!-- Root -->
-                        <MessageBubble :message="selectedThread" />
+                            <!-- Replies -->
+                            <MessageBubble
+                                v-for="reply in selectedThread.thread_replies"
+                                :key="reply.id"
+                                :message="reply"
+                            />
+                        </div>
 
-                        <!-- Replies -->
-                        <MessageBubble
-                            v-for="reply in selectedThread.thread_replies"
-                            :key="reply.id"
-                            :message="reply"
-                        />
-                    </div>
-
-                    <div
-                        class="p-6 border-t border-slate-700 flex justify-end gap-2"
-                    >
-                        <LoadingButton
-                            :loading="replyingToId === selectedThread.id"
-                            :loading-text="'Sending...'"
-                            base-classes="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                            @click="replyToThread(selectedThread)"
+                        <!-- Footer (fixed) -->
+                        <div
+                            class="p-6 border-t border-slate-700 flex flex-wrap justify-end gap-2 shrink-0"
                         >
-                            Reply to Latest Customer Message
-                        </LoadingButton>
+                            <LoadingButton
+                                :loading="replyingToId === selectedThread.id"
+                                :loading-text="'Sending...'"
+                                base-classes="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                                @click="replyToThread(selectedThread)"
+                            >
+                                Reply to Latest Customer Message
+                            </LoadingButton>
 
-                        <LoadingButton
-                            base-classes="bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-                            @click="selectedThread = null"
-                        >
-                            Close
-                        </LoadingButton>
+                            <LoadingButton
+                                base-classes="bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                                @click="selectedThread = null"
+                            >
+                                Close
+                            </LoadingButton>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -362,7 +369,12 @@
             <ReplyModal
                 v-if="replyingTo"
                 :comment="replyingTo"
-                @close="() => { replyingTo = null; replyingToId = null }"
+                @close="
+                    () => {
+                        replyingTo = null;
+                        replyingToId = null;
+                    }
+                "
                 @sent="handleReplySent"
             />
         </div>
@@ -638,3 +650,25 @@ const MessageBubble = defineComponent({
     },
 });
 </script>
+<style scoped>
+/* thin, dark-theme scrollbar */
+.thin-scroll {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #475569 transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+    /* Chrome, Edge, Safari */
+    width: 6px;
+    height: 6px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+}
+</style>
