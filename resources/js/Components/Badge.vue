@@ -1,5 +1,5 @@
 <template>
-    <span :class="['px-3 py-1 rounded-full text-sm font-medium', variantClasses]">
+    <span :class="['px-3 py-1 rounded-full text-sm font-medium min-w-[8rem]', variantClasses]">
         <slot />
     </span>
 </template>
