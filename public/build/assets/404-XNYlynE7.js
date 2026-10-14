@@ -1,1 +1,0 @@
-import{j as e,v as t,x as n}from"./app-BcbEOVTd.js";import{t as r}from"./_plugin-vue_export-helper-BDNMzG2s.js";var i={},a={class:`p-8 text-center`};function o(r,i){return e(),n(`div`,a,[...i[0]||=[t(`h1`,{class:`text-4xl font-bold`},`404`,-1),t(`p`,null,`Page not found`,-1)]])}var s=r(i,[[`render`,o]]);export{s as default};

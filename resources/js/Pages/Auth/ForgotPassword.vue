@@ -1,68 +1,79 @@
-<script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-
-defineProps({
-    status: {
-        type: String,
-    },
-});
-
-const form = useForm({
-    email: '',
-});
-
-const submit = () => {
-    form.post(route('password.email'));
-};
-</script>
-
 <template>
-    <GuestLayout>
-        <Head title="Forgot Password" />
+    <Head title="Forgot Password" />
 
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Forgot your password? No problem. Just let us know your email
-            address and we will email you a password reset link that will allow
-            you to choose a new one.
-        </div>
-
+    <AuthShell
+        title="Forgot your password?"
+        subtitle="Enter your email and we'll send you a link to choose a new one."
+    >
+        <!-- Success message from the server -->
         <div
             v-if="status"
-            class="mb-4 text-sm font-medium text-green-600 dark:text-green-400"
+            class="mb-6 rounded-lg border border-emerald-600/40 bg-emerald-900/30 p-3 text-sm text-emerald-200"
+            role="status"
         >
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
+                <label
+                    for="email"
+                    class="mb-2 block text-sm font-medium text-slate-300"
+                >
+                    Email Address
+                </label>
+                <input
                     id="email"
-                    type="email"
-                    class="mt-1 block w-full"
                     v-model="form.email"
+                    type="email"
                     required
                     autofocus
                     autocomplete="username"
+                    class="w-full rounded-lg border border-white/10 bg-slate-900/70 px-4 py-2.5 text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="you@example.com"
                 />
-
-                <InputError class="mt-2" :message="form.errors.email" />
+                <p v-if="form.errors.email" class="mt-1 text-sm text-red-400">
+                    {{ form.errors.email }}
+                </p>
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:shadow-none"
+            >
+                <span v-if="!form.processing">Email Password Reset Link</span>
+                <span v-else>Sending...</span>
+            </button>
+
+            <p class="text-center text-sm">
+                <Link href="/login" class="text-blue-400 hover:text-blue-300"
+                    >← Back to sign in</Link
                 >
-                    Email Password Reset Link
-                </PrimaryButton>
-            </div>
+            </p>
         </form>
-    </GuestLayout>
+
+        <template #below>
+            Didn't get the email? Check your spam folder, or contact your
+            administrator.
+        </template>
+    </AuthShell>
 </template>
+
+<script setup>
+import { Head, useForm } from "@inertiajs/vue3";
+import AuthShell from "@/Components/AuthShell.vue";
+import Link from "@/Components/Link.vue";
+
+defineProps({
+    status: { type: String, default: "" },
+});
+
+const form = useForm({
+    email: "",
+});
+
+const submit = () => {
+    form.post("/forgot-password");
+};
+</script>
