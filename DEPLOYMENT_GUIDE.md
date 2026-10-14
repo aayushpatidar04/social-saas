@@ -1,6 +1,6 @@
 > **Multi-tenant (SaaS) edition:** see `SAAS_GUIDE.md` for the extra steps (migrations, importing credentials, creating the super admin) and for configuring Meta/Instagram.
 
-# Social Media Automation — Deployment & Setup Guide
+# InTouch Connect Automation — Deployment & Setup Guide
 ## Deployment to Sectona Cloud Server
 
 ## 1. Overview
@@ -309,7 +309,7 @@ LINKEDIN_WEBHOOK_SECRET=your_webhook_secret
 ## 6. Complete `.env` Template
 
 ```env
-APP_NAME="Social Media Automation"
+APP_NAME="InTouch Connect Automation"
 APP_ENV=production
 APP_KEY=base64:YOUR_APP_KEY
 APP_DEBUG=false

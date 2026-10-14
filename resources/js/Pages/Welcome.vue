@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <!-- Navigation -->
         <nav class="flex justify-between items-center max-w-7xl mx-auto px-6 py-6">
-            <h1 class="text-2xl font-bold text-white">Social Media Automation</h1>
+            <h1 class="text-2xl font-bold text-white">InTouch Connect Automation</h1>
             <div class="space-x-4">
                 <Link href="/login" class="px-4 py-2 text-slate-300 hover:text-white transition-colors">
                     Sign In

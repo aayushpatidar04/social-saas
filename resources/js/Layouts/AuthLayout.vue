@@ -6,7 +6,7 @@
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold text-white mb-2">
                     <Link href="/" class="text-white hover:text-blue-400 transition-colors">
-                        Social Media Automation
+                        InTouch Connect Automation
                     </Link>
                 </h1>
                 <p class="text-slate-400">{{ title }}</p>
@@ -19,7 +19,7 @@
 
             <!-- Footer -->
             <div class="text-center text-sm text-slate-400 mt-8">
-                <p>© 2024 Social Media Automation. All rights reserved.</p>
+                <p>© 2024 InTouch Connect Automation. All rights reserved.</p>
             </div>
         </div>
     </div>
