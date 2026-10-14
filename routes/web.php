@@ -11,7 +11,6 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\SocialAccountController;
 use App\Http\Controllers\FacebookAuthController;
-use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\KnowledgeSourceController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LinkedInController;
@@ -213,35 +212,6 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function () {
         Route::put('/{provider}', [IntegrationController::class, 'update'])->name('update');
         Route::delete('/{provider}', [IntegrationController::class, 'destroy'])->name('destroy');
         Route::post('/{provider}/test', [IntegrationController::class, 'test'])->name('test');
-    });
-
-    // ============================================
-    // SETTINGS - API
-    // ============================================
-
-    Route::prefix('settings/api')->name('settings.api.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Settings/API');
-        })->name('index');
-        Route::post('/keys/generate', function () {
-            // Generate API key logic here
-        })->name('generate-key');
-        Route::delete('/keys/{key}', function () {
-            // Revoke API key logic here
-        })->name('revoke-key');
-    });
-
-    // ============================================
-    // SETTINGS - KNOWLEDGE BASE
-    // ============================================
-
-    Route::prefix('settings/knowledge-base')->name('settings.knowledge-base.')->group(function () {
-        Route::get('/', [KnowledgeBaseController::class, 'index'])
-            ->name('index');
-        Route::post('/upload', [KnowledgeBaseController::class, 'upload'])
-            ->name('upload');
-        Route::delete('/{source}', [KnowledgeBaseController::class, 'delete'])
-            ->name('delete');
     });
 
     // ============================================
