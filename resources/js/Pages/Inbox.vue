@@ -1,389 +1,377 @@
 <template>
     <AppLayout>
-        <div class="min-h-screen bg-slate-900">
-            <!-- Header -->
-            <div class="bg-slate-800 border-b border-slate-700 p-6">
-                <div class="max-w-7xl mx-auto">
-                    <h1 class="text-3xl font-bold text-white mb-4">📩 Inbox</h1>
+        <Head title="Inbox" />
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-slate-700 rounded p-4">
-                            <p class="text-slate-400 text-sm">Total Threads</p>
-                            <p class="text-2xl font-bold text-white">
-                                {{ stats.total }}
-                            </p>
-                        </div>
-                        <div class="bg-slate-700 rounded p-4">
-                            <p class="text-slate-400 text-sm">New</p>
-                            <p class="text-2xl font-bold text-blue-400">
-                                {{ stats.new }}
-                            </p>
-                        </div>
-                        <div class="bg-slate-700 rounded p-4">
-                            <p class="text-slate-400 text-sm">Pending</p>
-                            <p class="text-2xl font-bold text-yellow-400">
-                                {{ stats.pending }}
-                            </p>
-                        </div>
-                        <div class="bg-slate-700 rounded p-4">
-                            <p class="text-slate-400 text-sm">Replied</p>
-                            <p class="text-2xl font-bold text-green-400">
-                                {{ stats.replied }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <!-- Header -->
+        <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight md:text-4xl">
+                    Inbox
+                </h1>
+                <p class="mt-1 text-slate-400">
+                    Customer conversations across all your social accounts
+                </p>
             </div>
+        </div>
 
-            <!-- Filters -->
-            <div class="bg-slate-800 border-b border-slate-700 p-6">
-                <div class="max-w-7xl mx-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <input
-                            v-model="filters.search"
-                            @input="applyFilters"
-                            type="text"
-                            placeholder="Search conversations..."
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
-                        />
-
-                        <select
-                            v-model="filters.status"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                        >
-                            <option value="">All Status</option>
-                            <option value="new">New</option>
-                            <option value="pending_approval">
-                                Pending Approval
-                            </option>
-                            <option value="replied">Replied</option>
-                            <option value="reviewed">Reviewed</option>
-                        </select>
-
-                        <select
-                            v-model="filters.sentiment"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                        >
-                            <option value="">All Sentiment</option>
-                            <option value="positive">Positive</option>
-                            <option value="neutral">Neutral</option>
-                            <option value="negative">Negative</option>
-                        </select>
-
-                        <select
-                            v-model="filters.platform"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                        >
-                            <option value="">All Platforms</option>
-                            <option value="facebook">Facebook</option>
-                            <option value="instagram">Instagram</option>
-                            <option value="youtube">YouTube</option>
-                            <option value="twitter">X/Twitter</option>
-                            <option value="linkedin">LinkedIn</option>
-                        </select>
-
-                        <select
-                            v-model="filters.intent"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                        >
-                            <option value="">All Intent</option>
-                            <option value="sales">Sales</option>
-                            <option value="support">Support</option>
-                            <option value="complaint">Complaint</option>
-                            <option value="question">Question</option>
-                            <option value="lead">Lead</option>
-                            <option value="general">General</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- Summary cards -->
+        <div class="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div
+                v-for="s in stats"
+                :key="s.label"
+                class="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10"
+            >
+                <div
+                    class="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-20 blur-2xl"
+                    :class="s.glow"
+                ></div>
+                <component :is="s.icon" class="mb-3 h-6 w-6" :class="s.tone" />
+                <p
+                    class="text-xs font-medium uppercase tracking-wide text-slate-400"
+                >
+                    {{ s.label }}
+                </p>
+                <p class="mt-1 text-3xl font-bold tabular-nums" :class="s.tone">
+                    {{ s.value }}
+                </p>
             </div>
+        </div>
 
-            <!-- Thread List -->
-            <div class="max-w-7xl mx-auto p-6">
-                <div v-if="loading" class="text-center py-8">
-                    <div class="inline-flex items-center gap-3 text-slate-400">
-                        <svg
-                            class="animate-spin h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                        </svg>
-                        Loading conversations...
-                    </div>
-                </div>
-
-                <div v-else-if="threads.length === 0" class="text-center py-12">
-                    <p class="text-slate-400 text-lg">No conversations found</p>
-                </div>
-
-                <div v-else class="space-y-4">
-                    <div
-                        v-for="thread in threads"
-                        :key="thread.id"
-                        @click="openThreadDetail(thread)"
-                        class="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-blue-500 cursor-pointer transition-colors"
-                    >
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex-1">
-                                <h3 class="text-lg font-bold text-white">
-                                    {{ thread.author_name }}
-                                </h3>
-
-                                <p class="text-slate-400 text-sm">
-                                    <span class="capitalize font-mono">{{
-                                        platformLabel(thread.platform)
-                                    }}</span>
-                                    · {{ formatDate(thread.commented_at) }}
-                                    <span v-if="thread.thread_replies?.length">
-                                        · 💬
-                                        {{ thread.thread_replies.length }}
-                                        replies
-                                    </span>
-                                </p>
-                            </div>
-
-                            <span
-                                :class="getStatusColor(thread.status)"
-                                class="px-3 py-1 rounded-full text-sm font-medium capitalize"
-                            >
-                                {{ thread.status }}
-                            </span>
-                        </div>
-
-                        <!-- Root Message -->
-                        <p class="text-slate-200 mb-4 line-clamp-2">
-                            {{ thread.content }}
-                        </p>
-
-                        <!-- Latest Message Preview -->
-                        <div
-                            v-if="latestMessage(thread)"
-                            class="bg-slate-900 rounded p-3 mb-4 border border-slate-700"
-                        >
-                            <p class="text-xs text-slate-500 mb-1">
-                                Latest message ·
-                                {{
-                                    latestMessage(thread).direction ===
-                                    "outbound"
-                                        ? "You / AI"
-                                        : latestMessage(thread).author_name
-                                }}
-                            </p>
-                            <p class="text-slate-300 text-sm line-clamp-1">
-                                {{ latestMessage(thread).content }}
-                            </p>
-                        </div>
-
-                        <!-- Analysis Tags -->
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span
-                                v-if="thread.sentiment"
-                                :class="getSentimentColor(thread.sentiment)"
-                                class="px-2 py-1 rounded text-xs font-medium"
-                            >
-                                {{ thread.sentiment }} ({{
-                                    thread.sentiment_score
-                                }}%)
-                            </span>
-
-                            <span
-                                v-if="thread.intent"
-                                :class="getIntentColor(thread.intent)"
-                                class="px-2 py-1 rounded text-xs font-medium capitalize"
-                            >
-                                {{ thread.intent }}
-                            </span>
-
-                            <span
-                                v-if="thread.is_lead"
-                                class="px-2 py-1 rounded text-xs font-medium bg-green-900 text-green-200"
-                            >
-                                ✓ Lead ({{ thread.lead_score }}%)
-                            </span>
-                        </div>
-
-                        <!-- Conversation Mini Timeline -->
-                        <div
-                            v-if="thread.thread_replies?.length"
-                            class="mb-4 border-l-2 border-slate-700 pl-4 space-y-2"
-                        >
-                            <div
-                                v-for="reply in thread.thread_replies.slice(-3)"
-                                :key="reply.id"
-                                class="text-sm"
-                            >
-                                <span
-                                    :class="
-                                        reply.direction === 'outbound'
-                                            ? 'text-blue-300'
-                                            : 'text-slate-300'
-                                    "
-                                    class="font-semibold"
-                                >
-                                    {{
-                                        reply.direction === "outbound"
-                                            ? "You / AI"
-                                            : reply.author_name
-                                    }}:
-                                </span>
-                                <span class="text-slate-400 line-clamp-1">
-                                    {{ reply.content }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <div class="flex gap-2" @click.stop>
-                            <LoadingButton
-                                :loading="replyingToId === thread.id"
-                                :loading-text="'Sending...'"
-                                base-classes="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
-                                @click="replyToThread(thread)"
-                            >
-                                Reply
-                            </LoadingButton>
-
-                            <LoadingButton
-                                v-if="thread.status !== 'replied'"
-                                :loading="loadingMarkResponded[thread.id]"
-                                :loading-text="'Saving...'"
-                                base-classes="bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg"
-                                @click="markAsResponded(thread)"
-                            >
-                                Mark Replied
-                            </LoadingButton>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pagination -->
-                <div v-if="pagination?.links" class="mt-6 flex flex-wrap gap-2">
-                    <button
-                        v-for="link in pagination.links"
-                        :key="link.label"
-                        v-html="link.label"
-                        :disabled="!link.url"
-                        @click="goToPage(link.url)"
-                        :class="[
-                            'px-3 py-2 rounded text-sm',
-                            link.active
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-300',
-                            !link.url
-                                ? 'opacity-50 cursor-not-allowed'
-                                : 'hover:bg-slate-600',
-                        ]"
+        <!-- Filters -->
+        <section :class="[card, 'mb-6']">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+                <div class="relative">
+                    <MagnifyingGlassIcon
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                    />
+                    <input
+                        v-model="filters.search"
+                        @input="applyFilters"
+                        type="text"
+                        placeholder="Search conversations..."
+                        :class="[field, 'pl-9']"
                     />
                 </div>
+
+                <select
+                    v-model="filters.status"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Status</option>
+                    <option value="new">New</option>
+                    <option value="pending_approval">Pending Approval</option>
+                    <option value="replied">Replied</option>
+                    <option value="reviewed">Reviewed</option>
+                </select>
+
+                <select
+                    v-model="filters.sentiment"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Sentiment</option>
+                    <option value="positive">Positive</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="negative">Negative</option>
+                </select>
+
+                <select
+                    v-model="filters.platform"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Platforms</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="twitter">X/Twitter</option>
+                    <option value="linkedin">LinkedIn</option>
+                </select>
+
+                <select
+                    v-model="filters.intent"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Intent</option>
+                    <option value="sales">Sales</option>
+                    <option value="support">Support</option>
+                    <option value="complaint">Complaint</option>
+                    <option value="question">Question</option>
+                    <option value="lead">Lead</option>
+                    <option value="general">General</option>
+                </select>
             </div>
+        </section>
 
-            <!-- Thread Detail Modal -->
-            <div
-                v-if="selectedThread"
-                class="fixed inset-0 bg-black bg-opacity-70 z-50 overflow-y-auto thin-scroll"
-                @click.self="selectedThread = null"
+        <!-- Thread List -->
+        <div v-if="loading" class="py-10 text-center">
+            <div class="inline-flex items-center gap-3 text-slate-400">
+                <ArrowPathIcon class="h-5 w-5 animate-spin" />
+                Loading conversations...
+            </div>
+        </div>
+
+        <section
+            v-else-if="threads.length === 0"
+            :class="[card, 'py-12 text-center']"
+        >
+            <p class="text-slate-400">No conversations found</p>
+        </section>
+
+        <div v-else class="space-y-3">
+            <article
+                v-for="thread in threads"
+                :key="thread.id"
+                @click="openThreadDetail(thread)"
+                class="cursor-pointer rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition-all hover:border-white/20 hover:bg-white/10"
             >
-                <!-- centers the modal, and lets the overlay scroll if the screen is very short -->
-                <div class="min-h-full flex items-center justify-center p-4">
-                    <div
-                        class="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-700"
+                <div class="mb-3 flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="truncate text-lg font-bold">
+                            {{ thread.author_name }}
+                        </h3>
+
+                        <p class="text-xs capitalize text-slate-400">
+                            <span
+                                class="mr-1 inline-block h-2 w-2 rounded-full"
+                                :class="platformColor(thread.platform)"
+                            ></span>
+                            {{ platformLabel(thread.platform) }}
+                            · {{ formatDate(thread.commented_at) }}
+                            <span v-if="thread.thread_replies?.length">
+                                · 💬 {{ thread.thread_replies.length }} replies
+                            </span>
+                        </p>
+                    </div>
+
+                    <span
+                        :class="getStatusColor(thread.status)"
+                        class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
                     >
-                        <!-- Header (fixed) -->
-                        <div
-                            class="p-6 border-b border-slate-700 flex justify-between items-start shrink-0"
-                        >
-                            <div>
-                                <h2 class="text-2xl font-bold text-white">
-                                    Conversation
-                                </h2>
-                                <p class="text-slate-400 text-sm">
-                                    {{ platformLabel(selectedThread.platform) }}
-                                    · {{ selectedThread.author_name }}
-                                </p>
-                            </div>
+                        {{ statusLabel(thread.status) }}
+                    </span>
+                </div>
 
-                            <button
-                                @click="selectedThread = null"
-                                class="text-slate-400 hover:text-white text-2xl"
-                            >
-                                ×
-                            </button>
+                <!-- Root Message -->
+                <p class="mb-3 line-clamp-2 text-sm text-slate-300">
+                    {{ thread.content }}
+                </p>
+
+                <!-- Latest Message Preview -->
+                <div
+                    v-if="latestMessage(thread)"
+                    class="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
+                >
+                    <p class="mb-1 text-xs text-slate-500">
+                        Latest message ·
+                        {{
+                            latestMessage(thread).direction === "outbound"
+                                ? "You / AI"
+                                : latestMessage(thread).author_name
+                        }}
+                    </p>
+                    <p class="line-clamp-1 text-sm text-slate-300">
+                        {{ latestMessage(thread).content }}
+                    </p>
+                </div>
+
+                <!-- Analysis Tags -->
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span
+                        v-if="thread.sentiment"
+                        :class="getSentimentColor(thread.sentiment)"
+                        class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
+                    >
+                        {{ thread.sentiment }} ({{ thread.sentiment_score }}%)
+                    </span>
+
+                    <span
+                        v-if="thread.intent"
+                        :class="getIntentColor(thread.intent)"
+                        class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
+                    >
+                        {{ thread.intent }}
+                    </span>
+
+                    <span
+                        v-if="thread.is_lead"
+                        class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-300"
+                    >
+                        ✓ Lead ({{ thread.lead_score }}%)
+                    </span>
+                </div>
+
+                <!-- Conversation Mini Timeline -->
+                <div
+                    v-if="thread.thread_replies?.length"
+                    class="mb-4 space-y-2 border-l-2 border-white/10 pl-4"
+                >
+                    <div
+                        v-for="reply in thread.thread_replies.slice(-3)"
+                        :key="reply.id"
+                        class="text-sm"
+                    >
+                        <span
+                            :class="
+                                reply.direction === 'outbound'
+                                    ? 'text-blue-300'
+                                    : 'text-slate-300'
+                            "
+                            class="font-semibold"
+                        >
+                            {{
+                                reply.direction === "outbound"
+                                    ? "You / AI"
+                                    : reply.author_name
+                            }}:
+                        </span>
+                        <span class="line-clamp-1 text-slate-400">
+                            {{ reply.content }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="flex gap-2" @click.stop>
+                    <LoadingButton
+                        :loading="replyingToId === thread.id"
+                        :loading-text="'Sending...'"
+                        :base-classes="primaryBtn"
+                        @click="replyToThread(thread)"
+                    >
+                        Reply
+                    </LoadingButton>
+
+                    <LoadingButton
+                        v-if="thread.status !== 'replied'"
+                        :loading="loadingMarkResponded[thread.id]"
+                        :loading-text="'Saving...'"
+                        :base-classes="ghostBtn"
+                        @click="markAsResponded(thread)"
+                    >
+                        Mark Replied
+                    </LoadingButton>
+                </div>
+            </article>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="pagination?.links" class="mt-6 flex flex-wrap gap-2">
+            <button
+                v-for="link in pagination.links"
+                :key="link.label"
+                v-html="link.label"
+                :disabled="!link.url"
+                @click="goToPage(link.url)"
+                :class="[
+                    'rounded-lg border px-3 py-1.5 text-sm transition-colors',
+                    link.active
+                        ? 'border-blue-500/40 bg-blue-500/20 text-blue-200'
+                        : 'border-white/10 bg-white/5 text-slate-300',
+                    !link.url
+                        ? 'cursor-not-allowed opacity-50'
+                        : 'hover:bg-white/10',
+                ]"
+            />
+        </div>
+
+        <!-- Thread Detail Modal -->
+        <div
+            v-if="selectedThread"
+            class="thin-scroll fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
+            @click.self="selectedThread = null"
+        >
+            <!-- centers the modal, and lets the overlay scroll if the screen is very short -->
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div
+                    class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b1230]/95 backdrop-blur-md"
+                >
+                    <!-- Header (fixed) -->
+                    <div
+                        class="flex shrink-0 items-start justify-between border-b border-white/10 p-6"
+                    >
+                        <div>
+                            <h2 class="text-2xl font-bold">Conversation</h2>
+                            <p class="text-sm text-slate-400">
+                                {{ platformLabel(selectedThread.platform) }}
+                                · {{ selectedThread.author_name }}
+                            </p>
                         </div>
 
-                        <!-- Thread bubbles (scrollable) -->
-                        <div
-                            class="flex-1 min-h-0 overflow-y-auto overscroll-contain thin-scroll p-6 space-y-4"
+                        <button
+                            @click="selectedThread = null"
+                            class="rounded-lg p-1 text-2xl leading-none text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
                         >
-                            <!-- Root -->
-                            <MessageBubble :message="selectedThread" />
+                            ×
+                        </button>
+                    </div>
 
-                            <!-- Replies -->
-                            <MessageBubble
-                                v-for="reply in selectedThread.thread_replies"
-                                :key="reply.id"
-                                :message="reply"
-                            />
-                        </div>
+                    <!-- Thread bubbles (scrollable) -->
+                    <div
+                        class="thin-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6"
+                    >
+                        <!-- Root -->
+                        <MessageBubble :message="selectedThread" />
 
-                        <!-- Footer (fixed) -->
-                        <div
-                            class="p-6 border-t border-slate-700 flex flex-wrap justify-end gap-2 shrink-0"
+                        <!-- Replies -->
+                        <MessageBubble
+                            v-for="reply in selectedThread.thread_replies"
+                            :key="reply.id"
+                            :message="reply"
+                        />
+                    </div>
+
+                    <!-- Footer (fixed) -->
+                    <div
+                        class="flex shrink-0 flex-wrap justify-end gap-2 border-t border-white/10 p-6"
+                    >
+                        <LoadingButton
+                            :loading="replyingToId === selectedThread.id"
+                            :loading-text="'Sending...'"
+                            :base-classes="primaryBtn"
+                            @click="replyToThread(selectedThread)"
                         >
-                            <LoadingButton
-                                :loading="replyingToId === selectedThread.id"
-                                :loading-text="'Sending...'"
-                                base-classes="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                                @click="replyToThread(selectedThread)"
-                            >
-                                Reply to Latest Customer Message
-                            </LoadingButton>
+                            Reply to Latest Customer Message
+                        </LoadingButton>
 
-                            <LoadingButton
-                                base-classes="bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-                                @click="selectedThread = null"
-                            >
-                                Close
-                            </LoadingButton>
-                        </div>
+                        <LoadingButton
+                            :base-classes="ghostBtn"
+                            @click="selectedThread = null"
+                        >
+                            Close
+                        </LoadingButton>
                     </div>
                 </div>
             </div>
-
-            <ReplyModal
-                v-if="replyingTo"
-                :comment="replyingTo"
-                @close="
-                    () => {
-                        replyingTo = null;
-                        replyingToId = null;
-                    }
-                "
-                @sent="handleReplySent"
-            />
         </div>
+
+        <ReplyModal
+            v-if="replyingTo"
+            :comment="replyingTo"
+            @close="
+                () => {
+                    replyingTo = null;
+                    replyingToId = null;
+                }
+            "
+            @sent="handleReplySent"
+        />
     </AppLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineComponent, h, reactive } from "vue";
-import { router, usePage } from "@inertiajs/vue3";
+import { ref, computed, defineComponent, h, reactive } from "vue";
+import { Head, router, usePage } from "@inertiajs/vue3";
+import {
+    ArrowPathIcon,
+    CheckBadgeIcon,
+    ChatBubbleLeftRightIcon,
+    ClockIcon,
+    InboxArrowDownIcon,
+    MagnifyingGlassIcon,
+} from "@heroicons/vue/24/outline";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import ReplyModal from "@/Components/Comments/ReplyModal.vue";
 import { toast } from "@/composables/useToast";
@@ -391,6 +379,20 @@ import LoadingButton from "@/Components/LoadingButton.vue";
 
 const page = usePage();
 
+// ---------------------------------------------------------------- shared style tokens (same as Analytics)
+const card =
+    "rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md";
+
+const field =
+    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 transition-colors focus:border-blue-500/50 focus:bg-white/10 focus:outline-none [&>option]:bg-[#0b1230]";
+
+const primaryBtn =
+    "rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-sm text-blue-100 transition-colors hover:bg-blue-500/30";
+
+const ghostBtn =
+    "rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-white/10";
+
+// ---------------------------------------------------------------- state
 const commentsProp = computed(() => page.props.comments || {});
 const initialFilters = computed(() => page.props.filters || {});
 
@@ -420,16 +422,39 @@ const pagination = computed(() => {
     };
 });
 
-const stats = computed(() => {
-    return {
-        total: threads.value.length,
-        new: threads.value.filter((c) => c.status === "new").length,
-        pending: threads.value.filter((c) => c.status === "pending_approval")
+const stats = computed(() => [
+    {
+        label: "Total threads",
+        value: threads.value.length,
+        icon: ChatBubbleLeftRightIcon,
+        tone: "text-white",
+        glow: "bg-slate-300",
+    },
+    {
+        label: "New",
+        value: threads.value.filter((c) => c.status === "new").length,
+        icon: InboxArrowDownIcon,
+        tone: "text-blue-400",
+        glow: "bg-blue-400",
+    },
+    {
+        label: "Pending",
+        value: threads.value.filter((c) => c.status === "pending_approval")
             .length,
-        replied: threads.value.filter((c) => c.status === "replied").length,
-    };
-});
+        icon: ClockIcon,
+        tone: "text-yellow-400",
+        glow: "bg-yellow-400",
+    },
+    {
+        label: "Replied",
+        value: threads.value.filter((c) => c.status === "replied").length,
+        icon: CheckBadgeIcon,
+        tone: "text-green-400",
+        glow: "bg-green-400",
+    },
+]);
 
+// ---------------------------------------------------------------- actions
 const markAsResponded = async (thread) => {
     loadingMarkResponded[thread.id] = true;
     try {
@@ -454,10 +479,6 @@ const markAsResponded = async (thread) => {
         loadingMarkResponded[thread.id] = false;
     }
 };
-
-onMounted(() => {
-    //
-});
 
 const applyFilters = () => {
     loading.value = true;
@@ -522,6 +543,7 @@ const handleReplySent = () => {
     toast.success("Reply sent successfully");
 };
 
+// ---------------------------------------------------------------- formatting + colors
 const formatDate = (date) => {
     if (!date) return "";
 
@@ -544,40 +566,55 @@ const platformLabel = (platform) => {
     return labels[platform] || platform;
 };
 
+// same dot colors as the Analytics "By platform" bars
+const platformColor = (p) =>
+    ({
+        facebook: "bg-blue-500",
+        instagram: "bg-pink-500",
+        youtube: "bg-red-500",
+        twitter: "bg-slate-300",
+        linkedin: "bg-sky-600",
+    })[p] ?? "bg-slate-500";
+
+const statusLabel = (status) => (status || "").replaceAll("_", " ");
+
 const getStatusColor = (status) => {
     const colors = {
-        new: "bg-blue-900 text-blue-200",
-        pending_approval: "bg-yellow-900 text-yellow-200",
-        replied: "bg-green-900 text-green-200",
-        reviewed: "bg-slate-700 text-slate-200",
-        sent: "bg-blue-900 text-blue-200",
+        new: "bg-blue-500/15 text-blue-300",
+        pending_approval: "bg-yellow-500/15 text-yellow-300",
+        replied: "bg-green-500/15 text-green-300",
+        reviewed: "bg-slate-500/20 text-slate-300",
+        sent: "bg-blue-500/15 text-blue-300",
     };
 
-    return colors[status] || "bg-slate-700 text-slate-200";
+    return colors[status] || "bg-slate-500/20 text-slate-300";
 };
 
 const getSentimentColor = (sentiment) => {
     const colors = {
-        positive: "bg-green-900 text-green-200",
-        neutral: "bg-slate-700 text-slate-200",
-        negative: "bg-red-900 text-red-200",
+        positive: "bg-green-500/15 text-green-300",
+        neutral: "bg-slate-500/20 text-slate-300",
+        negative: "bg-red-500/15 text-red-300",
+        pending: "bg-yellow-500/15 text-yellow-300",
     };
 
-    return colors[sentiment] || "bg-slate-700 text-slate-200";
+    return colors[sentiment] || "bg-slate-500/20 text-slate-300";
 };
 
 const getIntentColor = (intent) => {
     const colors = {
-        sales: "bg-blue-900 text-blue-200",
-        support: "bg-purple-900 text-purple-200",
-        complaint: "bg-red-900 text-red-200",
-        question: "bg-yellow-900 text-yellow-200",
-        lead: "bg-green-900 text-green-200",
+        sales: "bg-blue-500/15 text-blue-300",
+        support: "bg-purple-500/15 text-purple-300",
+        complaint: "bg-red-500/15 text-red-300",
+        lead: "bg-green-500/15 text-green-300",
+        question: "bg-yellow-500/15 text-yellow-300",
+        general: "bg-slate-500/20 text-slate-300",
     };
 
-    return colors[intent] || "bg-slate-700 text-slate-200";
+    return colors[intent] || "bg-slate-500/20 text-slate-300";
 };
 
+// ---------------------------------------------------------------- message bubble
 const MessageBubble = defineComponent({
     name: "MessageBubble",
     props: {
@@ -622,24 +659,24 @@ const MessageBubble = defineComponent({
                         "div",
                         {
                             class: [
-                                "max-w-2xl rounded-lg p-4",
+                                "max-w-2xl rounded-2xl border p-4 text-slate-100",
                                 isOutbound.value
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-slate-700 text-white",
+                                    ? "border-blue-500/30 bg-blue-500/20"
+                                    : "border-white/10 bg-white/5",
                             ],
                         },
                         [
                             h(
                                 "p",
                                 {
-                                    class: "text-xs opacity-80 mb-1",
+                                    class: "mb-1 text-xs text-slate-400",
                                 },
                                 `${name.value} · ${dateText.value}`,
                             ),
                             h(
                                 "p",
                                 {
-                                    class: "whitespace-pre-line",
+                                    class: "whitespace-pre-line text-sm",
                                 },
                                 props.message.content || "",
                             ),
@@ -650,11 +687,12 @@ const MessageBubble = defineComponent({
     },
 });
 </script>
+
 <style scoped>
 /* thin, dark-theme scrollbar */
 .thin-scroll {
     scrollbar-width: thin; /* Firefox */
-    scrollbar-color: #475569 transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 .thin-scroll::-webkit-scrollbar {
     /* Chrome, Edge, Safari */
@@ -665,10 +703,10 @@ const MessageBubble = defineComponent({
     background: transparent;
 }
 .thin-scroll::-webkit-scrollbar-thumb {
-    background-color: #475569; /* slate-600 */
+    background-color: rgba(255, 255, 255, 0.2);
     border-radius: 9999px;
 }
 .thin-scroll::-webkit-scrollbar-thumb:hover {
-    background-color: #64748b; /* slate-500 */
+    background-color: rgba(255, 255, 255, 0.35);
 }
 </style>

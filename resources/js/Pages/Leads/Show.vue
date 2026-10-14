@@ -1,40 +1,81 @@
 <template>
     <AppLayout>
+        <Head :title="lead.author_name || 'Lead'" />
+
         <div class="max-w-4xl">
-            <a href="/leads" class="text-blue-400 hover:text-blue-300 mb-8 inline-block">← Back to Leads</a>
+            <a
+                href="/leads"
+                class="mb-6 inline-flex items-center gap-1.5 text-sm text-blue-300 transition-colors hover:text-blue-200"
+            >
+                <ArrowLeftIcon class="h-4 w-4" />
+                Back to Leads
+            </a>
 
-            <div class="bg-slate-800 rounded-lg border border-slate-700 p-8">
-                <h1 class="text-3xl font-bold text-white mb-2">{{ lead.author_name }}</h1>
-                <p class="text-slate-400 mb-6">Lead Score: <span class="text-white font-bold">{{ lead.lead_score
-                        }}</span></p>
+            <section :class="[card, 'p-8']">
+                <!-- Header -->
+                <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight">
+                            {{ lead.author_name }}
+                        </h1>
+                        <p class="mt-1 text-slate-400">Lead details</p>
+                    </div>
 
-                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="flex items-center gap-3 text-sm text-slate-400">
+                        <span>Lead score</span>
+                        <div
+                            class="h-1.5 w-24 overflow-hidden rounded-full bg-white/10"
+                        >
+                            <div
+                                class="h-1.5 rounded-full bg-emerald-500"
+                                :style="{ width: clamp(lead.lead_score) + '%' }"
+                            ></div>
+                        </div>
+                        <span class="text-lg font-bold tabular-nums text-white">{{
+                            lead.lead_score ?? 0
+                        }}</span>
+                    </div>
+                </div>
+
+                <div class="grid gap-8 md:grid-cols-2">
                     <!-- Details -->
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Email</label>
-                            <p class="text-white">{{ lead.contact_email || 'N/A' }}</p>
+                            <label :class="label">Email</label>
+                            <p :class="value">
+                                {{ lead.contact_email || "N/A" }}
+                            </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Phone</label>
-                            <p class="text-white">{{ lead.contact_phone || 'N/A' }}</p>
+                            <label :class="label">Phone</label>
+                            <p :class="value">
+                                {{ lead.contact_phone || "N/A" }}
+                            </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Company</label>
-                            <p class="text-white">{{ lead.company_name || 'N/A' }}</p>
+                            <label :class="label">Company</label>
+                            <p :class="value">
+                                {{ lead.company_name || "N/A" }}
+                            </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Status</label>
-                            <select class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">
-                                <option :value="lead.lead_status" selected>{{ lead.lead_status }}</option>
+                            <label :class="label">Status</label>
+                            <select :class="[field, 'capitalize']">
+                                <option :value="lead.lead_status" selected>
+                                    {{ lead.lead_status }}
+                                </option>
                             </select>
                         </div>
                     </div>
 
                     <!-- Message -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Initial Message</label>
-                        <div class="bg-slate-700 rounded p-4 text-slate-300 min-h-40">
+                        <label :class="label">Initial message</label>
+                        <div
+                            :class="[
+                                'min-h-40 whitespace-pre-line rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300',
+                            ]"
+                        >
                             {{ lead.initial_message }}
                         </div>
                     </div>
@@ -42,23 +83,45 @@
 
                 <!-- Notes -->
                 <div class="mt-8">
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Notes</label>
-                    <textarea rows="6"
-                        class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">{{ lead.notes }}</textarea>
+                    <label :class="label">Notes</label>
+                    <textarea
+                        rows="6"
+                        :value="lead.notes"
+                        placeholder="Add notes about this lead..."
+                        :class="field"
+                    ></textarea>
                 </div>
 
-                <button class="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                <button
+                    class="mt-6 rounded-lg border border-blue-500/30 bg-blue-500/20 px-5 py-2 text-sm font-medium text-blue-100 transition-colors hover:bg-blue-500/30"
+                >
                     Update Lead
                 </button>
-            </div>
+            </section>
         </div>
     </AppLayout>
 </template>
 
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
+import { Head } from "@inertiajs/vue3";
+import { ArrowLeftIcon } from "@heroicons/vue/24/outline";
+import AppLayout from "@/Layouts/AppLayout.vue";
 
 defineProps({
     lead: Object,
-})
+});
+
+// ---------------------------------------------------------------- shared style tokens (same as the other pages)
+const card =
+    "rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md";
+
+const label = "mb-1.5 block text-xs font-medium text-slate-400";
+
+const value =
+    "rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100";
+
+const field =
+    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 transition-colors focus:border-blue-500/50 focus:bg-white/10 focus:outline-none [&>option]:bg-[#0b1230]";
+
+const clamp = (v) => Math.min(100, Math.max(0, Number(v ?? 0)));
 </script>

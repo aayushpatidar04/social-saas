@@ -1,9 +1,6 @@
 <script setup>
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { onMounted, ref } from "vue";
+import { Link, useForm, usePage } from "@inertiajs/vue3";
 
 defineProps({
     mustVerifyEmail: {
@@ -20,63 +17,83 @@ const form = useForm({
     name: user.name,
     email: user.email,
 });
+
+// ---------------------------------------------------------------- shared style tokens (same as the other pages)
+const label = "mb-1.5 block text-sm font-medium text-slate-300";
+
+const field =
+    "block w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 transition-colors focus:border-blue-500/50 focus:bg-white/10 focus:outline-none";
+
+const errorText = "mt-1.5 text-sm text-red-300";
+
+const primaryBtn =
+    "rounded-lg border border-blue-500/30 bg-blue-500/20 px-5 py-2 text-sm font-medium text-blue-100 transition-colors hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50";
+
+// keep the old TextInput behaviour: focus the name field on mount
+const nameInput = ref(null);
+onMounted(() => nameInput.value?.focus());
 </script>
 
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Profile Information
-            </h2>
+            <h3 class="text-lg font-bold">Profile information</h3>
 
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p class="mt-1 text-sm text-slate-400">
                 Update your account's profile information and email address.
             </p>
         </header>
 
         <form
             @submit.prevent="form.patch(route('profile.update'))"
-            class="mt-6 space-y-6"
+            class="mt-6 space-y-5"
         >
             <div>
-                <InputLabel for="name" value="Name" />
+                <label for="name" :class="label">Name</label>
 
-                <TextInput
+                <input
                     id="name"
+                    ref="nameInput"
                     type="text"
-                    class="mt-1 block w-full"
+                    :class="field"
                     v-model="form.name"
                     required
-                    autofocus
                     autocomplete="name"
                 />
 
-                <InputError class="mt-2" :message="form.errors.name" />
+                <p v-if="form.errors.name" :class="errorText">
+                    {{ form.errors.name }}
+                </p>
             </div>
 
             <div>
-                <InputLabel for="email" value="Email" />
+                <label for="email" :class="label">Email</label>
 
-                <TextInput
+                <input
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    :class="field"
                     v-model="form.email"
                     required
                     autocomplete="username"
                 />
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                <p v-if="form.errors.email" :class="errorText">
+                    {{ form.errors.email }}
+                </p>
             </div>
 
-            <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="mt-2 text-sm text-gray-800 dark:text-gray-200">
+            <div
+                v-if="mustVerifyEmail && user.email_verified_at === null"
+                class="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4"
+            >
+                <p class="text-sm text-yellow-200">
                     Your email address is unverified.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
+                        class="rounded-md text-sm text-yellow-100 underline underline-offset-2 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                     >
                         Click here to re-send the verification email.
                     </Link>
@@ -84,14 +101,16 @@ const form = useForm({
 
                 <div
                     v-show="status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600 dark:text-green-400"
+                    class="mt-2 text-sm font-medium text-green-300"
                 >
                     A new verification link has been sent to your email address.
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+                <button :disabled="form.processing" :class="primaryBtn">
+                    {{ form.processing ? "Saving…" : "Save" }}
+                </button>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -101,7 +120,7 @@ const form = useForm({
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600 dark:text-gray-400"
+                        class="text-sm text-emerald-300"
                     >
                         Saved.
                     </p>

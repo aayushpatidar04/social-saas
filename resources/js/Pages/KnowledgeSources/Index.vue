@@ -1,235 +1,226 @@
 <template>
     <AppLayout>
-        <div class="min-h-screen bg-slate-900">
-            <div class="bg-slate-800 border-b border-slate-700 p-6">
-                <div class="max-w-7xl mx-auto flex justify-between items-start">
-                    <div>
-                        <h1 class="text-3xl font-bold text-white mb-2">
-                            📚 Knowledge Sources
-                        </h1>
-                        <p class="text-slate-400">
-                            Upload and link knowledge sources for AI replies.
+        <Head title="Knowledge Sources" />
+
+        <!-- Header -->
+        <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight md:text-4xl">
+                    Knowledge Sources
+                </h1>
+                <p class="mt-1 text-slate-400">
+                    Upload and link knowledge sources for AI replies
+                </p>
+            </div>
+
+            <LoadingButton
+                :loading="loading.upload"
+                :loading-text="'Opening...'"
+                :base-classes="primaryBtn"
+                @click="showUploadModal = true"
+            >
+                Upload Source
+            </LoadingButton>
+        </div>
+
+        <!-- Filters -->
+        <section :class="[card, 'mb-6']">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div class="relative">
+                    <MagnifyingGlassIcon
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                    />
+                    <input
+                        v-model="filters.search"
+                        @input="applyFilters"
+                        placeholder="Search sources..."
+                        :class="[field, 'pl-9']"
+                    />
+                </div>
+
+                <select
+                    v-model="filters.type"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Types</option>
+                    <option value="pdf">PDF</option>
+                    <option value="docx">DOCX</option>
+                    <option value="faq">FAQ</option>
+                    <option value="script">Script</option>
+                    <option value="policy">Policy</option>
+                    <option value="template">Template</option>
+                    <option value="brochure">Brochure</option>
+                </select>
+
+                <select
+                    v-model="filters.scope"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Scope</option>
+                    <option value="global">Global</option>
+                    <option value="post_specific">Post Specific</option>
+                </select>
+
+                <select
+                    v-model="filters.indexed"
+                    @change="applyFilters"
+                    :class="field"
+                >
+                    <option value="">All Status</option>
+                    <option value="1">Indexed</option>
+                    <option value="0">Not Indexed</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Sources -->
+        <section
+            v-if="sources.length === 0"
+            :class="[card, 'py-12 text-center']"
+        >
+            <p class="text-slate-400">No knowledge sources found.</p>
+        </section>
+
+        <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <article
+                v-for="source in sources"
+                :key="source.id"
+                class="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition-all hover:border-white/20 hover:bg-white/10"
+            >
+                <div class="flex justify-between gap-4">
+                    <div class="min-w-0">
+                        <h3 class="truncate text-lg font-bold">
+                            {{ source.name }}
+                        </h3>
+                        <p class="mt-1 line-clamp-2 text-sm text-slate-400">
+                            {{ source.description || "No description" }}
                         </p>
                     </div>
 
-                    <LoadingButton
-                        :loading="loading.upload"
-                        :loading-text="'Opening...'"
-                        base-classes="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                        @click="showUploadModal = true"
+                    <span
+                        :class="
+                            source.is_indexed
+                                ? 'bg-green-500/15 text-green-300'
+                                : 'bg-yellow-500/15 text-yellow-300'
+                        "
+                        class="h-fit shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
                     >
-                        Upload Source
+                        {{ source.is_indexed ? "Indexed" : "Not Indexed" }}
+                    </span>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div :class="inner">
+                        <p class="text-xs text-slate-500">Type</p>
+                        <p class="text-sm font-semibold uppercase tabular-nums">
+                            {{ source.type }}
+                        </p>
+                    </div>
+                    <div :class="inner">
+                        <p class="text-xs text-slate-500">Scope</p>
+                        <p class="truncate text-sm font-semibold capitalize">
+                            {{ scopeLabel(source.scope) }}
+                        </p>
+                    </div>
+                    <div :class="inner">
+                        <p class="text-xs text-slate-500">Chunks</p>
+                        <p class="text-sm font-semibold tabular-nums">
+                            {{ source.total_chunks }}
+                        </p>
+                    </div>
+                    <div :class="inner">
+                        <p class="text-xs text-slate-500">File</p>
+                        <p class="text-sm font-semibold tabular-nums">
+                            {{ formatSize(source.file_size) }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4 border-t border-white/10 pt-4">
+                    <p
+                        class="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400"
+                    >
+                        Linked posts
+                    </p>
+                    <div v-if="source.social_posts?.length" class="space-y-2">
+                        <div
+                            v-for="post in source.social_posts"
+                            :key="post.id"
+                            :class="[inner, 'flex items-center justify-between gap-3']"
+                        >
+                            <span
+                                class="line-clamp-1 min-w-0 text-sm text-slate-300"
+                            >
+                                <span
+                                    class="mr-1 inline-block h-2 w-2 rounded-full"
+                                    :class="platformColor(post.platform)"
+                                ></span>
+                                <span class="capitalize">{{
+                                    post.platform
+                                }}</span>
+                                · {{ post.content || post.platform_post_id }}
+                            </span>
+                            <LoadingButton
+                                :loading="
+                                    loading.unlink[`${source.id}-${post.id}`]
+                                "
+                                :loading-text="'Removing...'"
+                                base-classes="shrink-0 text-xs text-red-300 transition-colors hover:text-red-200"
+                                @click="unlinkPost(source, post)"
+                            >
+                                Unlink
+                            </LoadingButton>
+                        </div>
+                    </div>
+                    <p v-else class="text-sm text-slate-500">
+                        No posts linked.
+                    </p>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <LoadingButton
+                        :loading="loading.link[source.id]"
+                        :loading-text="'Opening...'"
+                        :base-classes="primaryBtn"
+                        @click="openLinkModal(source)"
+                    >
+                        Link Posts
+                    </LoadingButton>
+
+                    <LoadingButton
+                        :loading="loading.reindex[source.id]"
+                        :loading-text="'Re-indexing...'"
+                        :base-classes="ghostBtn"
+                        @click="reindexSource(source)"
+                    >
+                        Re-index
+                    </LoadingButton>
+
+                    <LoadingButton
+                        :loading="loading.delete[source.id]"
+                        :loading-text="'Deleting...'"
+                        :base-classes="dangerBtn"
+                        @click="deleteSource(source)"
+                    >
+                        Delete
                     </LoadingButton>
                 </div>
-            </div>
-
-            <div class="max-w-7xl mx-auto p-6">
-                <div
-                    class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6"
-                >
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <input
-                            v-model="filters.search"
-                            @input="applyFilters"
-                            placeholder="Search sources..."
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                        />
-
-                        <select
-                            v-model="filters.type"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                        >
-                            <option value="">All Types</option>
-                            <option value="pdf">PDF</option>
-                            <option value="docx">DOCX</option>
-                            <option value="faq">FAQ</option>
-                            <option value="script">Script</option>
-                            <option value="policy">Policy</option>
-                            <option value="template">Template</option>
-                            <option value="brochure">Brochure</option>
-                        </select>
-
-                        <select
-                            v-model="filters.scope"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                        >
-                            <option value="">All Scope</option>
-                            <option value="global">Global</option>
-                            <option value="post_specific">Post Specific</option>
-                        </select>
-
-                        <select
-                            v-model="filters.indexed"
-                            @change="applyFilters"
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                        >
-                            <option value="">All Status</option>
-                            <option value="1">Indexed</option>
-                            <option value="0">Not Indexed</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div
-                    v-if="sources.length === 0"
-                    class="text-center py-12 text-slate-400"
-                >
-                    No knowledge sources found.
-                </div>
-
-                <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div
-                        v-for="source in sources"
-                        :key="source.id"
-                        class="bg-slate-800 border border-slate-700 rounded-lg p-5"
-                    >
-                        <div class="flex justify-between gap-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-white">
-                                    {{ source.name }}
-                                </h3>
-                                <p class="text-slate-400 text-sm mt-1">
-                                    {{ source.description || "No description" }}
-                                </p>
-                            </div>
-
-                            <span
-                                :class="
-                                    source.is_indexed
-                                        ? 'bg-green-900 text-green-200'
-                                        : 'bg-yellow-900 text-yellow-200'
-                                "
-                                class="px-3 py-1 rounded-full text-xs h-fit"
-                            >
-                                {{
-                                    source.is_indexed
-                                        ? "Indexed"
-                                        : "Not Indexed"
-                                }}
-                            </span>
-                        </div>
-
-                        <div
-                            class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-sm"
-                        >
-                            <div>
-                                <p class="text-slate-500">Type</p>
-                                <p class="text-white uppercase">
-                                    {{ source.type }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-slate-500">Scope</p>
-                                <p class="text-white">
-                                    {{ source.scope || "global" }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-slate-500">Chunks</p>
-                                <p class="text-white">
-                                    {{ source.total_chunks }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-slate-500">File</p>
-                                <p class="text-white">
-                                    {{ formatSize(source.file_size) }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 border-t border-slate-700 pt-4">
-                            <p class="text-slate-400 text-sm mb-2">
-                                Linked Posts
-                            </p>
-                            <div
-                                v-if="source.social_posts?.length"
-                                class="space-y-2"
-                            >
-                                <div
-                                    v-for="post in source.social_posts"
-                                    :key="post.id"
-                                    class="flex justify-between items-center bg-slate-900 rounded p-2"
-                                >
-                                    <span
-                                        class="text-slate-300 text-sm line-clamp-1"
-                                    >
-                                        {{ post.platform }} ·
-                                        {{
-                                            post.content ||
-                                            post.platform_post_id
-                                        }}
-                                    </span>
-                                    <LoadingButton
-                                        :loading="
-                                            loading.unlink[
-                                                `${source.id}-${post.id}`
-                                            ]
-                                        "
-                                        :loading-text="'Removing...'"
-                                        base-classes="text-red-400 hover:text-red-300 text-xs"
-                                        @click="unlinkPost(source, post)"
-                                    >
-                                        Unlink
-                                    </LoadingButton>
-                                </div>
-                            </div>
-                            <p v-else class="text-slate-500 text-sm">
-                                No posts linked.
-                            </p>
-                        </div>
-
-                        <div class="flex flex-wrap gap-2 mt-4">
-                            <LoadingButton
-                                :loading="loading.link[source.id]"
-                                :loading-text="'Opening...'"
-                                base-classes="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded"
-                                @click="openLinkModal(source)"
-                            >
-                                Link Posts
-                            </LoadingButton>
-
-                            <LoadingButton
-                                :loading="loading.reindex[source.id]"
-                                :loading-text="'Re-indexing...'"
-                                base-classes="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded"
-                                @click="reindexSource(source)"
-                            >
-                                Re-index
-                            </LoadingButton>
-
-                            <LoadingButton
-                                :loading="loading.delete[source.id]"
-                                :loading-text="'Deleting...'"
-                                base-classes="px-3 py-2 bg-red-700 hover:bg-red-800 text-white text-sm rounded"
-                                @click="deleteSource(source)"
-                            >
-                                Delete
-                            </LoadingButton>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </article>
         </div>
 
         <!-- Upload Modal -->
-        <div
-            v-if="showUploadModal"
-            class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-        >
+        <div v-if="showUploadModal" :class="overlay">
             <div
-                class="bg-slate-800 border border-slate-700 rounded-lg max-w-2xl w-full p-6"
+                :class="[
+                    modal,
+                    'thin-scroll max-h-[90vh] max-w-2xl overflow-y-auto p-6',
+                ]"
             >
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-white">
-                        Upload Knowledge Source
-                    </h2>
-                    <button
-                        @click="showUploadModal = false"
-                        class="text-slate-400 text-2xl"
-                    >
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Upload Knowledge Source</h2>
+                    <button @click="showUploadModal = false" :class="closeBtn">
                         ×
                     </button>
                 </div>
@@ -239,21 +230,18 @@
                         v-model="form.name"
                         required
                         placeholder="Source name"
-                        class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                        :class="field"
                     />
 
                     <textarea
                         v-model="form.description"
                         placeholder="Description"
-                        class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                        rows="3"
+                        :class="field"
                     ></textarea>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select
-                            v-model="form.type"
-                            required
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white"
-                        >
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <select v-model="form.type" required :class="field">
                             <option value="">Select Type</option>
                             <option value="pdf">PDF</option>
                             <option value="docx">DOCX</option>
@@ -264,11 +252,7 @@
                             <option value="brochure">Brochure</option>
                         </select>
 
-                        <select
-                            v-model="form.scope"
-                            required
-                            class="px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white"
-                        >
+                        <select v-model="form.scope" required :class="field">
                             <option value="global">Global</option>
                             <option value="post_specific">Post Specific</option>
                         </select>
@@ -278,7 +262,7 @@
                         v-if="form.scope === 'post_specific'"
                         class="space-y-2"
                     >
-                        <p class="text-slate-300 text-sm font-medium">
+                        <p class="text-sm font-medium text-slate-300">
                             Select posts for this source
                         </p>
 
@@ -286,31 +270,34 @@
                             v-model="postSearch"
                             type="text"
                             placeholder="Search posts by platform, ID, or content..."
-                            class="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                            :class="field"
                         />
 
                         <div
-                            class="max-h-60 overflow-y-auto bg-slate-900 border border-slate-700 rounded-lg p-3 space-y-2"
+                            :class="[
+                                inner,
+                                'thin-scroll max-h-60 space-y-2 overflow-y-auto',
+                            ]"
                         >
                             <label
                                 v-for="post in filteredPostsForSource"
                                 :key="post.id"
-                                class="flex gap-3 items-start bg-slate-800 rounded p-3 cursor-pointer"
+                                :class="[inner, rowLabel]"
                             >
                                 <input
                                     type="checkbox"
                                     :value="post.id"
                                     v-model="form.post_ids"
-                                    class="mt-1"
+                                    :class="checkbox"
                                 />
 
-                                <div>
-                                    <p class="text-white text-sm">
+                                <div class="min-w-0">
+                                    <p class="text-sm">
                                         {{ post.platform }} ·
                                         {{ post.platform_post_id }}
                                     </p>
                                     <p
-                                        class="text-slate-400 text-xs line-clamp-2"
+                                        class="line-clamp-2 text-xs text-slate-400"
                                     >
                                         {{ post.content || "No content" }}
                                     </p>
@@ -319,7 +306,7 @@
 
                             <p
                                 v-if="filteredPostsForSource.length === 0"
-                                class="text-slate-500 text-sm text-center py-4"
+                                class="py-4 text-center text-sm text-slate-500"
                             >
                                 No posts found.
                             </p>
@@ -327,7 +314,7 @@
 
                         <p
                             v-if="form.post_ids.length === 0"
-                            class="text-yellow-400 text-xs"
+                            class="text-xs text-yellow-300"
                         >
                             Select at least one post for post-specific
                             knowledge.
@@ -337,21 +324,21 @@
                     <input
                         type="file"
                         @change="handleFile"
-                        class="w-full text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                        class="w-full rounded-lg border border-white/10 bg-white/5 p-1.5 text-sm text-slate-300 file:mr-4 file:rounded-md file:border-0 file:bg-blue-500/20 file:px-3 file:py-1.5 file:text-sm file:text-blue-100 hover:file:bg-blue-500/30"
                     />
 
                     <div class="flex justify-end gap-2">
                         <button
                             type="button"
                             @click="showUploadModal = false"
-                            class="px-4 py-2 bg-slate-700 text-white rounded"
+                            :class="ghostBtn"
                         >
                             Cancel
                         </button>
                         <LoadingButton
                             :loading="uploading"
                             :loading-text="'Uploading...'"
-                            base-classes="px-4 py-2 bg-blue-600 text-white rounded"
+                            :base-classes="primaryBtn"
                             type="submit"
                             :disabled="
                                 form.scope === 'post_specific' &&
@@ -366,58 +353,47 @@
         </div>
 
         <!-- Link Modal -->
-        <div
-            v-if="linkingSource"
-            class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-        >
-            <div
-                class="bg-slate-800 border border-slate-700 rounded-lg max-w-3xl w-full p-6"
-            >
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-white">Link Posts</h2>
-                    <button
-                        @click="linkingSource = null"
-                        class="text-slate-400 text-2xl"
-                    >
+        <div v-if="linkingSource" :class="overlay">
+            <div :class="[modal, 'max-w-3xl p-6']">
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Link Posts</h2>
+                    <button @click="linkingSource = null" :class="closeBtn">
                         ×
                     </button>
                 </div>
 
-                <div class="max-h-96 overflow-y-auto space-y-2">
+                <div class="thin-scroll max-h-96 space-y-2 overflow-y-auto">
                     <label
                         v-for="post in posts"
                         :key="post.id"
-                        class="flex gap-3 items-start bg-slate-900 rounded p-3 cursor-pointer"
+                        :class="[inner, rowLabel]"
                     >
                         <input
                             type="checkbox"
                             :value="post.id"
                             v-model="selectedPostIds"
-                            class="mt-1"
+                            :class="checkbox"
                         />
-                        <div>
-                            <p class="text-white text-sm">
+                        <div class="min-w-0">
+                            <p class="text-sm">
                                 {{ post.platform }} ·
                                 {{ post.platform_post_id }}
                             </p>
-                            <p class="text-slate-400 text-sm line-clamp-2">
+                            <p class="line-clamp-2 text-sm text-slate-400">
                                 {{ post.content || "No content" }}
                             </p>
                         </div>
                     </label>
                 </div>
 
-                <div class="flex justify-end gap-2 mt-4">
-                    <button
-                        @click="linkingSource = null"
-                        class="px-4 py-2 bg-slate-700 text-white rounded"
-                    >
+                <div class="mt-5 flex justify-end gap-2">
+                    <button @click="linkingSource = null" :class="ghostBtn">
                         Cancel
                     </button>
                     <LoadingButton
                         :loading="loading.link[linkingSource?.id]"
                         :loading-text="'Saving...'"
-                        base-classes="px-4 py-2 bg-blue-600 text-white rounded"
+                        :base-classes="primaryBtn"
                         @click="linkPosts"
                     >
                         Save Links
@@ -429,15 +405,49 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { router, usePage } from "@inertiajs/vue3";
+import { ref, computed, reactive } from "vue";
+import { Head, router, usePage } from "@inertiajs/vue3";
+import { MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { toast } from "@/composables/useToast";
 import LoadingButton from "@/Components/LoadingButton.vue";
-import { reactive } from "vue";
 
 const page = usePage();
 
+// ---------------------------------------------------------------- shared style tokens (same as Analytics / Inbox / Social Posts)
+const card =
+    "rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md";
+
+const inner = "rounded-xl border border-white/10 bg-white/[0.03] p-3";
+
+const rowLabel =
+    "flex cursor-pointer items-start gap-3 transition-colors hover:bg-white/[0.07]";
+
+const checkbox =
+    "mt-1 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/40";
+
+const field =
+    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 transition-colors focus:border-blue-500/50 focus:bg-white/10 focus:outline-none [&>option]:bg-[#0b1230]";
+
+const primaryBtn =
+    "rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-sm text-blue-100 transition-colors hover:bg-blue-500/30";
+
+const ghostBtn =
+    "rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-white/10";
+
+const dangerBtn =
+    "rounded-lg border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-sm text-red-200 transition-colors hover:bg-red-500/25";
+
+const overlay =
+    "fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm";
+
+const modal =
+    "w-full rounded-2xl border border-white/10 bg-[#0b1230]/95 backdrop-blur-md";
+
+const closeBtn =
+    "rounded-lg px-1.5 text-2xl leading-none text-slate-400 transition-colors hover:bg-white/10 hover:text-white";
+
+// ---------------------------------------------------------------- state
 const sources = computed(
     () => page.props.sources?.data || page.props.sources || [],
 );
@@ -448,6 +458,7 @@ const showUploadModal = ref(false);
 const linkingSource = ref(null);
 const selectedPostIds = ref([]);
 const uploading = ref(false);
+const postSearch = ref("");
 
 const filters = ref({
     search: currentFilters.value.search || "",
@@ -470,8 +481,10 @@ const loading = reactive({
     delete: {},
     link: {},
     reindex: {},
+    unlink: {}, // was missing: unlinkPost() and the template both read loading.unlink[...]
 });
 
+// ---------------------------------------------------------------- actions
 const applyFilters = () => {
     router.get("/knowledge-sources", filters.value, {
         preserveState: true,
@@ -519,9 +532,13 @@ const openLinkModal = (source) => {
 
 const linkPosts = () => {
     if (!linkingSource.value) return;
-    loading.link[linkingSource.value.id] = true;
+
+    // capture the id: onSuccess clears linkingSource before onFinish runs,
+    // which used to leave the loading flag stuck on true
+    const sourceId = linkingSource.value.id;
+    loading.link[sourceId] = true;
     router.post(
-        `/knowledge-sources/${linkingSource.value.id}/link-posts`,
+        `/knowledge-sources/${sourceId}/link-posts`,
         {
             post_ids: selectedPostIds.value,
         },
@@ -532,8 +549,7 @@ const linkPosts = () => {
                 toast.success("Posts linked successfully");
             },
             onFinish: () => {
-                if (linkingSource.value)
-                    loading.link[linkingSource.value.id] = false;
+                loading.link[sourceId] = false;
             },
         },
     );
@@ -584,12 +600,23 @@ const deleteSource = (source) => {
     });
 };
 
+// ---------------------------------------------------------------- formatting
 const formatSize = (bytes) => {
     if (!bytes) return "0 KB";
     return `${(bytes / 1024).toFixed(1)} KB`;
 };
 
-const postSearch = ref("");
+const scopeLabel = (scope) => (scope || "global").replaceAll("_", " ");
+
+// same dot colors as the Analytics "By platform" bars
+const platformColor = (p) =>
+    ({
+        facebook: "bg-blue-500",
+        instagram: "bg-pink-500",
+        youtube: "bg-red-500",
+        twitter: "bg-slate-300",
+        linkedin: "bg-sky-600",
+    })[p] ?? "bg-slate-500";
 
 const filteredPostsForSource = computed(() => {
     const search = postSearch.value.toLowerCase().trim();
@@ -613,3 +640,25 @@ const filteredPostsForSource = computed(() => {
     });
 });
 </script>
+
+<style scoped>
+/* thin, dark-theme scrollbar */
+.thin-scroll {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+</style>

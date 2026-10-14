@@ -1,1 +1,0 @@
-import{H as e,M as t,P as n,R as r,n as i,y as a}from"./app-CchstByX.js";var o={__name:`Link`,props:{href:{type:String,required:!0},as:{type:String,default:`a`}},setup(o){return(s,c)=>(t(),a(e(i),{href:o.href,as:o.as,class:`text-blue-400 hover:text-blue-300 transition-colors`},{default:r(()=>[n(s.$slots,`default`)]),_:3},8,[`href`,`as`]))}};export{o as t};
