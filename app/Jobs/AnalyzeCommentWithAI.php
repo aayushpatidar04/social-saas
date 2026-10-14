@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\SocialComment;
-use App\Models\Lead;
 use App\Services\OpenAIService;
+use App\Services\LeadCaptureService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -28,7 +28,7 @@ class AnalyzeCommentWithAI implements ShouldQueue
         try {
             $service = new OpenAIService($this->comment->organization_id);
 
-            $analysis = $service->analyzeComment($this->comment->organization_id, $this->comment);
+            $analysis = $service->analyzeComment($this->comment);
 
             // Update comment with analysis results
             $this->comment->update([
@@ -41,10 +41,7 @@ class AnalyzeCommentWithAI implements ShouldQueue
                 'ai_analysis_completed_at' => now(),
             ]);
 
-            // Create Lead record if AI detected it as a lead or sales intent
-            if ($analysis['is_lead'] || $analysis['intent'] === 'sales') {
-                $this->createOrUpdateLead($analysis);
-            }
+            app(LeadCaptureService::class)->capture($this->comment, $analysis);
 
             // Generate AI response for high-value comments
             if ($analysis['is_lead'] || $analysis['intent'] === 'sales') {
@@ -74,33 +71,4 @@ class AnalyzeCommentWithAI implements ShouldQueue
         ]);
     }
 
-    private function createOrUpdateLead(array $analysis): void
-    {
-        $existingLead = Lead::where('social_comment_id', $this->comment->id)->first();
-
-        if ($existingLead) {
-            $existingLead->update([
-                'lead_score' => $analysis['lead_score'],
-            ]);
-            return;
-        }
-
-        $leadType = match ($analysis['intent'] ?? 'sales') {
-            'sales' => 'sales',
-            'support' => 'support',
-            default => 'sales',
-        };
-
-        Lead::create([
-            'organization_id' => $this->comment->socialAccount->organization_id,
-            'social_comment_id' => $this->comment->id,
-            'platform_author_id' => $this->comment->author_id,
-            'author_name' => $this->comment->author_name,
-            'author_profile_url' => $this->comment->author_avatar_url,
-            'initial_message' => substr($this->comment->content, 0, 500),
-            'lead_type' => $leadType,
-            'lead_score' => $analysis['lead_score'],
-            'lead_status' => 'new',
-        ]);
-    }
 }

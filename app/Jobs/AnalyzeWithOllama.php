@@ -5,8 +5,8 @@
 namespace App\Jobs;
 
 use App\Models\SocialComment;
-use App\Models\Lead;
 use App\Services\OllamaService;
+use App\Services\LeadCaptureService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -63,11 +63,7 @@ class AnalyzeWithOllama implements ShouldQueue
                 'ai_analysis_completed_at' => now(),
             ]);
 
-            // If it's a potential lead or support request, create Lead record
-            if ($analysis['is_lead'] || $analysis['intent'] === 'sales' || $analysis['intent'] === 'support') {
-
-                $this->createOrUpdateLead($analysis);
-            }
+            app(LeadCaptureService::class)->capture($this->comment, $analysis);
 
             // Always generate AI response for the comment
             GenerateOllamaResponse::dispatch($this->comment)->onConnection('sync');
@@ -87,34 +83,4 @@ class AnalyzeWithOllama implements ShouldQueue
         }
     }
 
-    private function createOrUpdateLead(array $analysis): void
-    {
-        $existingLead = Lead::where('social_comment_id', $this->comment->id)->first();
-
-        if ($existingLead) {
-            $existingLead->update([
-                'lead_score' => $analysis['lead_score'],
-                'lead_status' => $existingLead->lead_status === 'new' ? 'new' : $existingLead->lead_status,
-            ]);
-            return;
-        }
-
-        $leadType = match ($analysis['intent']) {
-            'sales' => 'sales',
-            'support' => 'support',
-            default => 'sales',
-        };
-
-        Lead::create([
-            'organization_id' => $this->comment->socialAccount->organization_id,
-            'social_comment_id' => $this->comment->id,
-            'platform_author_id' => $this->comment->platform_author_id ?? 'unknown_' . $this->comment->platform_comment_id,
-            'author_name' => $this->comment->author_name,
-            'author_profile_url' => $this->comment->author_avatar_url,
-            'initial_message' => substr($this->comment->content, 0, 500),
-            'lead_type' => $leadType,
-            'lead_score' => $analysis['lead_score'],
-            'lead_status' => 'new',
-        ]);
-    }
 }
