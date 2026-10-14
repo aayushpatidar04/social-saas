@@ -23,7 +23,8 @@ class SyncSocialCron extends Command
                 ->where('is_active', true)
                 ->whereNull('suspended_at')
                 ->where(fn ($q) => $q->whereNull('plan_expires_at')->orWhere('plan_expires_at', '>', now())))
-            ->whereIn('platform', ['youtube', 'twitter', 'linkedin', 'facebook', 'instagram'])
+            ->whereIn('platform', ['youtube', 'twitter', 'linkedin'])
+            // ->whereIn('platform', ['youtube', 'twitter', 'linkedin', 'facebook', 'instagram'])
             ->chunk(50, function ($accounts) {
                 foreach ($accounts as $account) {
                     // Normal incremental sync: 7-day comment window, no full sync
