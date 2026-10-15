@@ -51,18 +51,18 @@
                 >
                     <!-- Logo -->
                     <Link
-                        href="/dashboard"
-                        class="flex shrink-0 items-center gap-3 !text-white"
+                        href="/"
+                        class="flex items-center gap-2 text-white hover:text-blue-400 transition-colors"
                     >
-                        <span
-                            class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-lg shadow-lg shadow-blue-600/30"
-                            >💬</span
-                        >
-                        <span
-                            class="hidden text-base font-bold tracking-tight sm:block"
-                        >
-                            {{ site.name }}
-                        </span>
+                        <img
+                            src="/assets/brand/logo-horizontal.svg"
+                            alt="InTouch Connect Automation Logo"
+                            width="{150}"
+                            height="{40}"
+                            priority
+                            class="h-8 w-auto object-contain"
+                        />
+                        <span class="sr-only">InTouch Connect Automation</span>
                     </Link>
 
                     <!-- Desktop links -->

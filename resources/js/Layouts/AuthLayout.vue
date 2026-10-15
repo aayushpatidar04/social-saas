@@ -5,8 +5,16 @@
             <!-- Logo/Header -->
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold text-white mb-2">
-                    <Link href="/" class="text-white hover:text-blue-400 transition-colors">
-                        InTouch Connect Automation
+                    <Link href="/" class="flex items-center gap-2 text-white hover:text-blue-400 transition-colors">
+                        <img 
+                            src="/assets/brand/logo-horizontal.svg" 
+                            alt="InTouch Connect Automation Logo" 
+                            width={150} 
+                            height={40} 
+                            priority
+                            class="h-8 w-auto object-contain"
+                        />
+                        <span class="sr-only">InTouch Connect Automation</span>
                     </Link>
                 </h1>
                 <p class="text-slate-400">{{ title }}</p>
@@ -27,6 +35,7 @@
 
 <script setup>
 import Link from '@/Components/Link.vue'
+import Image from 'next/image';
 
 defineProps({
     title: {

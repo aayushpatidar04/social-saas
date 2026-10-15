@@ -8,14 +8,19 @@
             <header
                 class="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5"
             >
-                <Link href="/" class="flex items-center gap-3 !text-white">
-                    <span
-                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-lg shadow-lg shadow-blue-600/30"
-                        >💬</span
-                    >
-                    <span class="text-lg font-bold tracking-tight">{{
-                        site.name
-                    }}</span>
+                <Link
+                    href="/"
+                    class="flex items-center gap-2 text-white hover:text-blue-400 transition-colors"
+                >
+                    <img
+                        src="/assets/brand/logo-horizontal.svg"
+                        alt="InTouch Connect Automation Logo"
+                        width="{150}"
+                        height="{40}"
+                        priority
+                        class="h-8 w-auto object-contain"
+                    />
+                    <span class="sr-only">InTouch Connect Automation</span>
                 </Link>
                 <Link
                     href="/"

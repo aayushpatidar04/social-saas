@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="InTouch Connect Automation">
+  <defs>
+    <linearGradient id="f-bg" x1="6" y1="0" x2="58" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b82f6"/><stop offset=".55" stop-color="#4f46e5"/><stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <radialGradient id="f-shine" cx="22" cy="8" r="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="f-bolt" x1="26" y1="19" x2="38" y2="39" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#f-bg)"/>
+  <rect width="64" height="64" rx="15" fill="url(#f-shine)"/>
+  <path d="M23 15H41A9 9 0 0 1 50 24V34A9 9 0 0 1 41 43H29L19 51.5V43H23A9 9 0 0 1 14 34V24A9 9 0 0 1 23 15Z" fill="#fff"/>
+  <path d="M34.6 19.4 26.4 30.2H31.6L29.6 38.8 38.2 27.6H32.8L34.6 19.4Z" fill="url(#f-bolt)"/>
+</svg>
