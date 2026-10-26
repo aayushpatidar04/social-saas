@@ -133,6 +133,6 @@ return [
         'linkedin' => 'linkedin',
     ],
 
-    // How long a Facebook page-selection step stays valid (minutes).
+    // How long an account-selection step stays valid (minutes).
     'pending_selection_ttl' => 15,
 ];

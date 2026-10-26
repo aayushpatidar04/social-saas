@@ -47,20 +47,32 @@ class YoutubeService
         return $response->json();
     }
 
-    public function getMyChannel(string $accessToken): ?array
+    public function getMyChannels(string $accessToken): array
     {
-        $response = Http::withToken($accessToken)->get("{$this->baseUrl}/channels", [
-            'part' => 'snippet,contentDetails,statistics',
-            'mine' => 'true',
-        ]);
+        $channels = [];
+        $pageToken = null;
 
-        if (!$response->successful()) {
-            throw new \Exception('Failed to fetch YouTube channel: ' . $response->body());
-        }
+        do {
+            $query = [
+                'part' => 'snippet,contentDetails,statistics',
+                'mine' => 'true',
+                'maxResults' => 50,
+            ];
+            if ($pageToken) {
+                $query['pageToken'] = $pageToken;
+            }
 
-        $items = $response->json('items');
+            $response = Http::withToken($accessToken)->get("{$this->baseUrl}/channels", $query);
 
-        return $items[0] ?? null;
+            if (! $response->successful()) {
+                throw new \Exception('Failed to fetch YouTube channels: '.$response->body());
+            }
+
+            $channels = array_merge($channels, $response->json('items', []));
+            $pageToken = $response->json('nextPageToken');
+        } while ($pageToken);
+
+        return $channels;
     }
 
     public function syncComments(SocialAccount $account, array $options = []): int

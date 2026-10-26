@@ -222,6 +222,10 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function () {
         ->name('youtube.login');
     Route::get('/auth/youtube/callback', [YoutubeController::class, 'callback'])
         ->name('youtube.callback');
+    Route::get('/auth/youtube/select', [YoutubeController::class, 'select'])
+        ->name('auth.youtube.select');
+    Route::post('/auth/youtube/select', [YoutubeController::class, 'store'])
+        ->name('auth.youtube.store');
     Route::post('/settings/social-accounts/{account}/youtube-sync', [YoutubeController::class, 'sync'])
         ->name('youtube.sync');
     Route::post('/youtube/comments/{comment}/reply', [YoutubeController::class, 'reply'])
