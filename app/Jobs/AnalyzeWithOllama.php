@@ -28,6 +28,12 @@ class AnalyzeWithOllama implements ShouldQueue
     public function handle()
     {
         try {
+            Log::info('AnalyzeWithOllama started', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'content_length' => strlen($this->comment->content),
+            ]);
+
             $service = new OllamaService();
 
             $analysisText = $this->comment->content;
@@ -50,6 +56,11 @@ class AnalyzeWithOllama implements ShouldQueue
                 'lead_score' => $leadAnalysis['lead_score'],
             ];
 
+            Log::info('AnalyzeWithOllama completed analysis', [
+                'comment_id' => $this->comment->id,
+                'analysis' => $analysis,
+            ]);
+
             // Update comment with analysis results
             $this->comment->update([
                 'sentiment' => $analysis['sentiment'],
@@ -66,10 +77,17 @@ class AnalyzeWithOllama implements ShouldQueue
             app(LeadCaptureService::class)->capture($this->comment, $analysis);
 
             // Always generate AI response for the comment
+            Log::info('Dispatching GenerateOllamaResponse from AnalyzeWithOllama', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+            ]);
             GenerateOllamaResponse::dispatch($this->comment)->onConnection('sync');
 
         } catch (\Exception $e) {
-            Log::error('Ollama analysis failed: ' . $e->getMessage());
+            Log::error('Ollama analysis failed: ' . $e->getMessage(), [
+                'comment_id' => $this->comment->id,
+                'exception' => $e->getMessage(),
+            ]);
 
             $this->comment->update([
                 'sentiment' => 'pending',

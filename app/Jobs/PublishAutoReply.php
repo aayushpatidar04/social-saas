@@ -32,8 +32,19 @@ class PublishAutoReply implements ShouldQueue
     public function handle(): void
     {
         try {
+            Log::info('PublishAutoReply started', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'social_account_id' => $this->comment->social_account_id,
+            ]);
+
             $aiConversation = $this->comment->aiConversation;
             if (!$aiConversation || !$aiConversation->ai_response) {
+                Log::warning('PublishAutoReply skipped: AiConversation or ai_response not found', [
+                    'comment_id' => $this->comment->id,
+                    'has_ai_conversation' => (bool)$aiConversation,
+                    'has_ai_response' => $aiConversation ? (bool)$aiConversation->ai_response : false,
+                ]);
                 return;
             }
 
@@ -52,15 +63,29 @@ class PublishAutoReply implements ShouldQueue
             }
 
             if (!$service) {
-                Log::warning('Auto reply not supported for platform: ' . $this->comment->platform);
+                Log::warning('Auto reply not supported for platform: ' . $this->comment->platform, [
+                    'comment_id' => $this->comment->id,
+                ]);
                 return;
             }
+
+            Log::info('Publishing auto reply via platform service', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'response_length' => strlen($aiConversation->ai_response),
+            ]);
 
             $response = $service->publishReply(
                 $this->comment,
                 $aiConversation->ai_response,
                 $this->comment->socialAccount
             );
+
+            Log::info('Auto reply published successfully on platform API', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'platform_response' => is_array($response) ? $response : ['raw' => $response],
+            ]);
 
             if ($this->comment->platform === 'facebook') {
                 $this->storeFacebookOutboundReply(
@@ -114,8 +139,18 @@ class PublishAutoReply implements ShouldQueue
                 'replied_at' => now(),
             ]);
 
+            Log::info('PublishAutoReply completed successfully and comment marked as replied', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+            ]);
+
         } catch (\Exception $e) {
-            Log::error("Publish Reply Error: " . $e->getMessage());
+            Log::error("Publish Reply Error: " . $e->getMessage(), [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             // Update error status
             $this->comment->aiConversation()->update([

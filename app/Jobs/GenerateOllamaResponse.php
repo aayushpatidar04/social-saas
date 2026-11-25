@@ -31,6 +31,11 @@ class GenerateOllamaResponse implements ShouldQueue
     public function handle()
     {
         try {
+            Log::info('GenerateOllamaResponse started', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'social_account_id' => $this->comment->social_account_id,
+            ]);
 
             $account = $this->comment->socialAccount;
 
@@ -39,14 +44,26 @@ class GenerateOllamaResponse implements ShouldQueue
             // so it correctly handles comments from any time period as long as
             // they came in after auto-reply was enabled
             if (!$account || !$account->auto_reply_started_at) {
+                Log::warning('GenerateOllamaResponse skipped: Account not found or auto_reply_started_at not set', [
+                    'comment_id' => $this->comment->id,
+                    'account_id' => $account?->id,
+                ]);
                 return;
             }
 
             if (!$this->comment->commented_at || $this->comment->commented_at->lt($account->auto_reply_started_at)) {
+                Log::info('GenerateOllamaResponse skipped: Commented before auto_reply_started_at', [
+                    'comment_id' => $this->comment->id,
+                    'commented_at' => $this->comment->commented_at?->toIso8601String(),
+                    'auto_reply_started_at' => $account->auto_reply_started_at?->toIso8601String(),
+                ]);
                 return;
             }
 
             if ($this->comment->is_own_comment) {
+                Log::info('GenerateOllamaResponse skipped: Own comment', [
+                    'comment_id' => $this->comment->id,
+                ]);
                 return;
             }
 
@@ -59,6 +76,12 @@ class GenerateOllamaResponse implements ShouldQueue
                 'conversation_history' => $conversationHistory,
             ];
 
+            Log::info('Generating Ollama response for comment', [
+                'comment_id' => $this->comment->id,
+                'platform' => $this->comment->platform,
+                'organization_id' => $this->comment->organization_id,
+            ]);
+
             $response = $service->generateResponse(
                 $this->comment->organization_id,
                 $this->comment,
@@ -66,9 +89,17 @@ class GenerateOllamaResponse implements ShouldQueue
             );
 
             if (empty($response)) {
-                Log::warning('Empty response from AI');
+                Log::warning('Empty response from AI', [
+                    'comment_id' => $this->comment->id,
+                ]);
                 return;
             }
+
+            Log::info('Ollama response generated successfully', [
+                'comment_id' => $this->comment->id,
+                'response_length' => strlen($response),
+                'response_snippet' => substr($response, 0, 100),
+            ]);
 
             $aiConversation = AiConversation::create([
                 'original_comment' => $this->comment->content,
@@ -84,10 +115,19 @@ class GenerateOllamaResponse implements ShouldQueue
                 'ai_response_text' => $response,
             ]);
 
+            Log::info('Dispatching PublishAutoReply from GenerateOllamaResponse', [
+                'comment_id' => $this->comment->id,
+                'ai_conversation_id' => $aiConversation->id,
+                'platform' => $this->comment->platform,
+            ]);
+
             PublishAutoReply::dispatch($this->comment)->onConnection('sync');
 
         } catch (\Exception $e) {
-            Log::error('Error generating response: ' . $e->getMessage());
+            Log::error('Error generating response: ' . $e->getMessage(), [
+                'comment_id' => $this->comment->id,
+                'exception' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }

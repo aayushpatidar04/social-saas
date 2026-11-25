@@ -216,7 +216,18 @@ class YoutubeService
 
         $totalNew = $comment->wasRecentlyCreated ? 1 : 0;
 
+        Log::info('YouTube comment processed', [
+            'comment_id' => $comment->id,
+            'platform_comment_id' => $commentId,
+            'video_id' => $storedPost->platform_post_id,
+            'was_recently_created' => $comment->wasRecentlyCreated,
+            'is_full_sync' => $isFullSync,
+        ]);
+
         if ($comment->wasRecentlyCreated && !$isFullSync) {
+            Log::info('Dispatching AnalyzeWithOllama for new YouTube comment', [
+                'comment_id' => $comment->id,
+            ]);
             AnalyzeWithOllama::dispatch($comment)->onConnection('sync');
         }
 
@@ -654,6 +665,13 @@ class YoutubeService
         // YouTube replies go to the parent comment thread
         $parentId = $comment->platform_parent_id ?: $comment->platform_comment_id;
 
+        Log::info('Sending YouTube publishReply API request', [
+            'comment_id' => $comment->id,
+            'platform_comment_id' => $comment->platform_comment_id,
+            'parent_id' => $parentId,
+            'message_length' => strlen($message),
+        ]);
+
         $response = Http::withToken($accessToken)->post(
             "{$this->baseUrl}/comments?part=snippet",
             [
@@ -677,10 +695,15 @@ class YoutubeService
             );
         }
 
-        $replyData = $response->json('snippet', []);
+        $replyId = $response->json('id');
+
+        Log::info('YouTube reply API request successful', [
+            'comment_id' => $comment->id,
+            'youtube_reply_id' => $replyId,
+        ]);
 
         return [
-            'id' => $response->json('id'),
+            'id' => $replyId,
             'url' => null,
         ];
     }
