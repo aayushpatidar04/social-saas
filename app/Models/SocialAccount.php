@@ -30,6 +30,7 @@ class SocialAccount extends Model
         'refresh_token' => 'encrypted',
         'webhook_subscribed_at' => 'datetime',
         'token_refreshed_at' => 'datetime',
+        'auto_reply_started_at' => 'datetime',
     ];
  
     protected $hidden = ['access_token', 'refresh_token'];
